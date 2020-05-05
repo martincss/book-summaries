@@ -1,0 +1,464 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass extbook
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "utopia" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "default" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize 12
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 2cm
+\topmargin 2cm
+\rightmargin 2cm
+\bottommargin 2cm
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Deep Learning Book: summary
+\end_layout
+
+\begin_layout Chapter*
+Chapter 6: Deep FeedForward Networks
+\end_layout
+
+\begin_layout Standard
+The goal is to approximate some function 
+\begin_inset Formula $f^{*}$
+\end_inset
+
+.
+ A ffn defines a mapping 
+\begin_inset Formula $\boldsymbol{y}=f\left(\boldsymbol{x};\boldsymbol{\theta}\right)$
+\end_inset
+
+and learns the values of the parameters 
+\begin_inset Formula $\boldsymbol{\theta}$
+\end_inset
+
+ for the best function approximation.
+ The 
+\series bold
+network
+\series default
+ model is associated with a directed acyclic graph describing how several
+ functions 
+\begin_inset Formula $f^{(i)}$
+\end_inset
+
+ are composed together.
+ These represente the 
+\series bold
+layers
+\series default
+ of the network.
+ The training examples specify what the output layer must do at each point
+ 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+, but not for the other layers.
+ The learning algorithm must decide how to use these layers to best implement
+ an approximation of 
+\begin_inset Formula $f^{*}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+FF networks can be considered as extensions from linear models to represent
+ nonlinear functions of 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+.
+ This is done by applying the linear model to 
+\begin_inset Formula $\phi\left(\boldsymbol{x}\right)$
+\end_inset
+
+, where 
+\begin_inset Formula $\phi$
+\end_inset
+
+ is a nonlinear transformation.
+ 
+\begin_inset Formula $\phi$
+\end_inset
+
+ provides a new representation or set of features for 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+.
+ In DL, the strategy is to learn 
+\begin_inset Formula $\phi$
+\end_inset
+
+, with a model 
+\begin_inset Formula $y=f\left(\boldsymbol{x};\boldsymbol{\theta},\boldsymbol{w}\right)=\phi\left(\boldsymbol{x};\boldsymbol{\theta}\right)^{\dagger}\boldsymbol{w}$
+\end_inset
+
+; the parameters 
+\begin_inset Formula $\boldsymbol{\theta}$
+\end_inset
+
+ are used to 
+\bar under
+learn 
+\begin_inset Formula $\phi$
+\end_inset
+
+ from a broad class of functions
+\bar default
+, and 
+\begin_inset Formula $\boldsymbol{w}$
+\end_inset
+
+ map 
+\begin_inset Formula $\phi\left(\boldsymbol{x}\right)$
+\end_inset
+
+ to the output.
+ This approach gives up on the convexity of the training problem but the
+ benefits outweigh the harms.
+\end_layout
+
+\begin_layout Section
+Example: Learning XOR
+\end_layout
+
+\begin_layout Standard
+We want a ff network to learn the XOR function, which maps 
+\begin_inset Formula $\boldsymbol{X}=\left\{ \left(\begin{array}{c}
+0\\
+0
+\end{array}\right),\left(\begin{array}{c}
+1\\
+0
+\end{array}\right),\left(\begin{array}{c}
+0\\
+1
+\end{array}\right),\left(\begin{array}{c}
+1\\
+1
+\end{array}\right)\right\} \longmapsto\left\{ 0,1,1,0\right\} $
+\end_inset
+
+.
+ Just for this example, we treat the problem as regression with a cost function
+ 
+\begin_inset Formula 
+\[
+J\left(\boldsymbol{\theta}\right)=\dfrac{1}{4}\sum_{\boldsymbol{x}\in\boldsymbol{X}}\left(f^{*}\left(\boldsymbol{x}\right)-f\left(\boldsymbol{x};\boldsymbol{\theta}\right)\right)^{2}\text{ (MSE)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+A linear model sharply fails, so a solution is to use a model that learns
+ a different feature space in which a linear model can represent a solution.
+\end_layout
+
+\begin_layout Standard
+We introduce a ff network with one hidden layer with two units.
+ Thus, the model is given by 
+\begin_inset Formula $y=f^{(2)}\left(\boldsymbol{h};\boldsymbol{w},b\right)$
+\end_inset
+
+, with the hidden units 
+\begin_inset Formula $\boldsymbol{h}=f^{(1)}\left(\boldsymbol{x};\boldsymbol{W},\boldsymbol{c}\right)$
+\end_inset
+
+.
+ The output is a linear regression, applied to 
+\begin_inset Formula $\boldsymbol{h}$
+\end_inset
+
+: 
+\begin_inset Formula $y=\boldsymbol{h}^{\dagger}\boldsymbol{w}+b$
+\end_inset
+
+.
+ If 
+\begin_inset Formula $f^{(1)}$
+\end_inset
+
+ were a linear transformation, the network as a whole would remain linear,
+ so we must use a nonlinear function to describe the features.
+ Most nn use a 
+\bar under
+learned affine transformation
+\bar default
+ followed by a fixed nonlinear function (
+\emph on
+activation
+\emph default
+).
+ Thus, 
+\begin_inset Formula $\boldsymbol{h}=g\left(\boldsymbol{W}^{\dagger}\boldsymbol{x}+\boldsymbol{c}\right)$
+\end_inset
+
+; the activation is applied element-wise and the default choice is the 
+\bar under
+ReLU
+\bar default
+.
+ 
+\bar under
+Because the function is nearly linear, it preserves many of the properties
+ that make linear models easy to optimize with gradient-based methods.
+\end_layout
+
+\begin_layout Section
+Gradient-based learning
+\end_layout
+
+\begin_layout Standard
+Unlike linear, logistic or SVM models, the nonlinearity of a nn causes loss
+ functions to become non-convex.
+ SGD applied to these functions has no convergence guarantee and is sensitive
+ to parameter initial values.
+ For ffnn, it is important to initialize all weights to small random numbers
+ (biases to zero or small positive values).
+\end_layout
+
+\begin_layout Standard
+Linear models & SVMs may be trained with SGD for large datasets; in this
+ view, nn training is not much different.
+ Computing the gradient is more complex but can be done exactly.
+\end_layout
+
+\begin_layout Subsection
+Cost functions
+\end_layout
+
+\begin_layout Standard
+In most cases, the parametric model defines a distribution 
+\begin_inset Formula $p\left(\boldsymbol{y}\,|\,\boldsymbol{x};\boldsymbol{\theta}\right)$
+\end_inset
+
+ and we use maximum likelihood, thus making 
+\bar under
+the cost function as the cross-entropy
+\bar default
+ (see section 5.5) between training data & predictions.
+ The total cost in training will often combine the primary cost and a regulariza
+tion term.
+\end_layout
+
+\begin_layout Subsubsection
+Learning conditional distributions with Maximum Likelihood
+\end_layout
+
+\begin_layout Standard
+In such conditions, the cost function is 
+\begin_inset Formula 
+\[
+J\left(\boldsymbol{\theta}\right)=-\mathbb{E}_{\boldsymbol{x},\boldsymbol{y}\sim p_{\text{data}}}\underset{\text{log likelihood}}{\underbrace{\log p_{\text{model}}\left(\boldsymbol{y}\,|\,\boldsymbol{x}\right)}}
+\]
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+Its specific form depends on the model (by 
+\begin_inset Formula $p_{\text{model}}$
+\end_inset
+
+).
+ The expression may yield terms that do not depend on model parameters and
+ can thus be discarded.
+ For example, considering regression (see section 5.5.1), with 
+\begin_inset Formula $p_{\text{model}}\left(\boldsymbol{y}\,|\,\boldsymbol{x}\right)=\mathcal{N}\left(\boldsymbol{y};f\left(\boldsymbol{x};\boldsymbol{\theta}\right),\boldsymbol{I}\right)$
+\end_inset
+
+, we recover the MSE cost 
+\begin_inset Formula 
+\[
+J\left(\boldsymbol{\theta}\right)=\mathbb{E}_{\boldsymbol{x},\boldsymbol{y}\sim p_{\text{data}}}\left\Vert \boldsymbol{y}-f\left(\boldsymbol{x};\boldsymbol{\theta}\right)\right\Vert ^{2}+\text{const}\left(\boldsymbol{I}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In nn design, the cost gradient should be large & predictable.
+ Functions that saturate (
+\emph on
+i.e.
+
+\emph default
+ activation) undermine this as they make the gradient small; the negative
+ log-likelihood helps avoid this problem (saturation is usually given by
+ an exponential, so the log undoes that)
+\end_layout
+
+\begin_layout Standard
+The cross-entropy cost in MLE usually does not have a minimum (
+\emph on
+i.e.
+
+\emph default
+ output probability cannot reach 
+\begin_inset Formula $0$
+\end_inset
+
+ or 
+\begin_inset Formula $1$
+\end_inset
+
+, but can come arbitrarily close to), This is solved by regularization technique
+s.
+\end_layout
+
+\begin_layout Subsubsection
+Learning conditional statistics
+\end_layout
+
+\begin_layout Standard
+Instead of learning 
+\begin_inset Formula $p\left(\boldsymbol{y}\,|\,\boldsymbol{x};\boldsymbol{\theta}\right)$
+\end_inset
+
+, we often want to learn just one conditional statistic of 
+\begin_inset Formula $\boldsymbol{y}$
+\end_inset
+
+, given 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+If we regard the nn being able to represent a large class of functions (instead
+ of a parametric model with 
+\begin_inset Formula $\boldsymbol{\theta}$
+\end_inset
+
+), and the cost as a functional over such space, we may optimize it with
+ calculus of variations.
+ By solving for 
+\begin_inset Formula 
+\[
+f^{*}=\underset{f}{\text{argmin }}\mathbb{E}_{\boldsymbol{x},\boldsymbol{y}\sim p_{\text{data}}}\left\Vert \boldsymbol{y}-f\left(\boldsymbol{x}\right)\right\Vert ^{2}
+\]
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+yields 
+\begin_inset Formula 
+\[
+f^{*}=\mathbb{E}_{\boldsymbol{y}\sim p_{\text{data}}\left(\boldsymbol{y}\;|\;\boldsymbol{x}\right)}\left[\boldsymbol{y}\right]
+\]
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\emph on
+i.e.
+
+\emph default
+ this cost function predicts the mean of 
+\begin_inset Formula $\boldsymbol{y}$
+\end_inset
+
+ for each 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+.
+ Considering the MAE cost, we obtain a predictor for the median.
+\end_layout
+
+\begin_layout Subsection
+Output units
+\end_layout
+
+\end_body
+\end_document

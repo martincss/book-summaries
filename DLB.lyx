@@ -460,5 +460,125 @@ i.e.
 Output units
 \end_layout
 
+\begin_layout Standard
+The choice of how to represent the output determines the form of the cross-entro
+py.
+ We suppose the ffnn provides 
+\begin_inset Formula $\boldsymbol{h}=f\left(\boldsymbol{x};\boldsymbol{\theta}\right)$
+\end_inset
+
+ and the role of the output layer is to transform these features for the
+ task.
+\end_layout
+
+\begin_layout Subsubsection
+Linear units for gaussian output distributions (
+\emph on
+i.e.
+ 
+\emph default
+regression)
+\end_layout
+
+\begin_layout Standard
+Affine transformation with nonlinearity: 
+\begin_inset Formula $\boldsymbol{\hat{y}}=\boldsymbol{W}^{\dagger}\boldsymbol{h}+\boldsymbol{b}$
+\end_inset
+
+.
+ These are used for the mean of a conditional gaussian 
+\begin_inset Formula $p\left(\boldsymbol{y}\,|\,\boldsymbol{x}\right)=\mathcal{N}\left(\boldsymbol{y};\boldsymbol{\hat{y}},\boldsymbol{I}\right)$
+\end_inset
+
+.
+ As we have seen, maximizing the log-likelihood is equivalent to minimizing
+ the MSE.
+ Also, their unbounded image goes well with GD.
+\end_layout
+
+\begin_layout Subsubsection
+Sigmoid for Bernoulli output distribution (
+\emph on
+i.e.
+ 
+\emph default
+binary classification)
+\end_layout
+
+\begin_layout Standard
+We need to predict 
+\begin_inset Formula $P\left(y=1\,|\,\boldsymbol{x}\right)$
+\end_inset
+
+.
+ Using ReLU wouldn't work, as the gradient may be null when the training
+ example corresponds to the negative class; a sigmoid unit is instead used:
+ 
+\begin_inset Formula $z=\boldsymbol{h}^{\dagger}\boldsymbol{w}+b$
+\end_inset
+
+, 
+\begin_inset Formula $\hat{y}=\sigma\left(z\right)$
+\end_inset
+
+.
+ We can obtain this by assuming the log likelihood is linear in the output
+ 
+\begin_inset Formula $y$
+\end_inset
+
+ and 
+\begin_inset Formula $z$
+\end_inset
+
+.
+ Then, normalizing: 
+\begin_inset Formula $P\left(y\right)=\sigma\left[\left(2y-1\right)z\right]$
+\end_inset
+
+.
+ Thus, the MLE cost function is 
+\begin_inset Formula 
+\begin{align*}
+J\left(\boldsymbol{\theta}\right) & =\log P\left(y\;|\;\boldsymbol{x}\right)=-\log\sigma\left[\left(2y-1\right)z\right]\\
+ & =\zeta\left[\left(1-2y\right)z\right]\text{ (softplus)}
+\end{align*}
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+This saturates only when 
+\begin_inset Formula $\left(1-2y\right)z\ll0$
+\end_inset
+
+ [that is, when the model already knows the correct answer for that instance].
+ If 
+\begin_inset Formula $z$
+\end_inset
+
+ has the wrong sign, then 
+\begin_inset Formula $\left(1-2y\right)z=\left|z\right|$
+\end_inset
+
+, and the asymptote derivative is 
+\begin_inset Formula $\text{sign}\left(z\right)$
+\end_inset
+
+, so the gradient does not shrink and the error can be corrected for quickly.
+\end_layout
+
+\begin_layout Standard
+With other cost functions than MLE cross-entropy, such as MSE, the loss
+ can saturate with 
+\begin_inset Formula $\sigma\left(z\right)$
+\end_inset
+
+, thus shrinking the gradient, regardless of the actual answer.
+ MLE is thus preferred.
+\end_layout
+
 \end_body
 \end_document

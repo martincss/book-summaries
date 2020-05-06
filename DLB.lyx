@@ -580,5 +580,310 @@ With other cost functions than MLE cross-entropy, such as MSE, the loss
  MLE is thus preferred.
 \end_layout
 
+\begin_layout Subsubsection
+Softmax for Multinoulli output distribution (
+\emph on
+i.e.
+ 
+\emph default
+multiclass classification)
+\end_layout
+
+\begin_layout Standard
+To represent the probability distribution over a discrete variable with
+ 
+\begin_inset Formula $n$
+\end_inset
+
+ possible values, we may use softmax.
+\end_layout
+
+\begin_layout Standard
+We now need 
+\begin_inset Formula $\boldsymbol{\hat{y}}$
+\end_inset
+
+, with 
+\begin_inset Formula $\hat{y}_{i}=P\left(y=i\,|\,\boldsymbol{x}\right)$
+\end_inset
+
+ and also 
+\begin_inset Formula $\sum_{i}\hat{y}_{i}=1$
+\end_inset
+
+.
+ We generalize the approach for the Bernoulli distribution: 
+\begin_inset Formula $\boldsymbol{z}=\boldsymbol{W}^{\dagger}\boldsymbol{h}+\boldsymbol{b}$
+\end_inset
+
+, where 
+\begin_inset Formula $\boldsymbol{z}\propto\log P\left(y=i\,|\,\boldsymbol{x}\right)$
+\end_inset
+
+.
+ Then, normalizing:
+\begin_inset Formula 
+\[
+\text{softmax}\left(\boldsymbol{z}\right)_{i}=\dfrac{\exp\left(z_{i}\right)}{\sum_{j}\exp\left(z_{j}\right)}
+\]
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+The log-likelihood is then 
+\begin_inset Formula 
+\[
+\log\text{softmax}\left(\boldsymbol{z}\right)_{i}=z_{i}-\log\sum_{j}\exp\left(z_{j}\right)
+\]
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+the first term can never saturate, thus learning can proceed.
+ The second term is 
+\begin_inset Formula $\sim\max_{j}z_{j}$
+\end_inset
+
+; the intuition is that the cost always strongly penalizes the most active
+ incorrect prediction.
+ If the correct answer already has the largest 
+\begin_inset Formula $z_{i}$
+\end_inset
+
+, the 
+\begin_inset Formula $\text{cost}\sim\max_{j}z_{j}-z_{i}\simeq0$
+\end_inset
+
+; this examples will contribute little to the cost, which will be dominated
+ by the incorrect ones.
+ Unregularized MLE will drive the model to predict
+\begin_inset Formula 
+\[
+\text{softmax}\left(\boldsymbol{z}\left(\boldsymbol{x};\boldsymbol{\theta}\right)\right)_{i}=\left.\dfrac{\#\text{instances with }\boldsymbol{x}^{(j)}=\boldsymbol{x}\text{ and }\boldsymbol{y}^{(j)}=i}{\#\text{instances with }\boldsymbol{x}^{(j)}=\boldsymbol{x}}\right\} \rightarrow\begin{cases}
+\text{proportion of class \ensuremath{i} from }\\
+\text{instances with same \ensuremath{\boldsymbol{x}}}
+\end{cases}
+\]
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+As MLE is consistent, this will happen as ling as the model family is capable
+ of representing the target distribution.
+ In practice, the model will only approximate these factors.
+\end_layout
+
+\begin_layout Standard
+Other cost functions than MLE don't work as well with softmax.
+ The log from log-likelihood can prevent the exponential saturation, which
+ diminishes the gradient.
+ This saturation can occur even in incorrect predictions (when 
+\begin_inset Formula $z_{i}=\max_{j}z_{j}$
+\end_inset
+
+ and 
+\begin_inset Formula $z_{i}\gg z_{j}\;j\neq i$
+\end_inset
+
+).
+ This means the model can make highly confident incorrect predictions with
+ little loss.
+\end_layout
+
+\begin_layout Standard
+We can think of the softmax as creatin competition between its inputs (
+\emph on
+i.e.
+
+\emph default
+ increase in one output decreases others).
+ The function is actually a softened version of 
+\begin_inset Formula $\text{argmax}\left(\boldsymbol{z}\right)$
+\end_inset
+
+ 
+\emph on
+(softargmax).
+\end_layout
+
+\begin_layout Section
+Hidden Units
+\end_layout
+
+\begin_layout Standard
+The design choices of hidden units is an active area of research without
+ many definitive guiding theoretical principles.
+ ReLUs are an excellent default choice; the jump in their derivatives at
+ 
+\begin_inset Formula $z=0$
+\end_inset
+
+ is not a problem in practice, in part because training does not usually
+ arrive at a local minimum of cost, but rather reduces its value significantly.
+ 
+\end_layout
+
+\begin_layout Subsection
+ReLUs & their generalizations
+\end_layout
+
+\begin_layout Standard
+ReLUs 
+\bar under
+are easy to optimize as they are similar to linear units:
+\bar default
+ their gradients are large and consistent.
+ When initializing parameters, it can be good practice to set bias to a
+ small positive number 
+\begin_inset Formula $b\sim0.1$
+\end_inset
+
+, thus making units initially active for most inputs and allowing gradients
+ to pass through.
+\end_layout
+
+\begin_layout Standard
+Some generalizations exist to address the problem that they cannot learn
+ on examples for which their activation is zero.
+ A 
+\series bold
+leaky ReLU
+\series default
+ has an 
+\begin_inset Formula $\alpha_{i}$
+\end_inset
+
+ slope when 
+\begin_inset Formula $z_{i}<0$
+\end_inset
+
+, fixed to a small value like 
+\begin_inset Formula $0.01$
+\end_inset
+
+.
+ A 
+\series bold
+parametric ReLU
+\series default
+ treats 
+\begin_inset Formula $\alpha_{i}$
+\end_inset
+
+ as a learnable parameter.
+\end_layout
+
+\begin_layout Paragraph
+Maxout units 
+\begin_inset Newline newline
+\end_inset
+
+
+\series medium
+ReLUs also help with recurrent nn, as linear activation facilitates the
+ propagation of information through several time steps.
+\end_layout
+
+\begin_layout Subsection
+Logistic sigmoid & 
+\begin_inset Formula $\text{tanh}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+These were mostly used prior to ReLUs.
+ Unlike the latter, these saturate across most of their domain; thus their
+ use as hidden units in ffnn is now discouraged.
+ They are more common in recurrent nn and autoencoders.
+\end_layout
+
+\begin_layout Subsection
+Other hidden units
+\end_layout
+
+\begin_layout Standard
+A wide variety of differentiable functions perform perfectly well.
+ New hidden unit types are now published only if they provide a clear improvemen
+t; otherwise they are so common as to be uninteresting.
+\end_layout
+
+\begin_layout Standard
+Softplus is generally discouraged, as it empirically shows worse performance
+ than the rectifier.
+\end_layout
+
+\begin_layout Section
+Architecture design
+\end_layout
+
+\begin_layout Standard
+In layer-based ffnn, the main choices are the depth of the network and width
+ of each layer.
+ Deeper networks often use fewer units per layer and total parameters, and
+ often generalize to the test set, but are also harder to optimize.
+ The ideal architecture for a task must be found via experimentation.
+\end_layout
+
+\begin_layout Subsection
+Universal approximation properties & Depth
+\end_layout
+
+\begin_layout Standard
+The 
+\series bold
+UA theorem 
+\series default
+states that a ffnn with at least one hidden layer can approximate any Borel
+ measurable function (on spaces of finite dimension) with any desired non-zero
+ amount of error, given enough hidden units.
+ However, the theorem states the nn will be able to 
+\emph on
+represent
+\emph default
+ this function, that it can be 
+\emph on
+learned
+\emph default
+ thru training is not guaranteed.
+ Moreover, the number of hidden units needed, in worst case, is exponentially
+ bounded.
+\end_layout
+
+\begin_layout Standard
+There exist families of functions which can be efficiently approximated
+ by a network with depth 
+\begin_inset Formula $>d$
+\end_inset
+
+, but require a much larger model if using a lesser depth.
+\begin_inset Newline newline
+\end_inset
+
+There are also statistical motivations for choosing a deep model.
+ This choice encodes a general belief that the function to learn involves
+ the composition of several simpler functions.
+ This can be interpreted from a representation point of view that the learning
+ problem consists of discovering a set of underlying features which in turn
+ can be described in terms of simpler underlying features.
+ Empirically, greater depth does seem to result in better generalization
+ for many tasks (deeps archs.
+ as a useful prior).
+\end_layout
+
+\begin_layout Standard
+
+\end_layout
+
 \end_body
 \end_document

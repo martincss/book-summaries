@@ -85,6 +85,22 @@
 Deep Learning Book: summary
 \end_layout
 
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\grad}{\boldsymbol{\nabla}}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\pdev}[2]{\dfrac{\partial#1}{\partial#2}}
+\end_inset
+
+
+\end_layout
+
 \begin_layout Chapter*
 Chapter 6: Deep FeedForward Networks
 \end_layout
@@ -881,7 +897,351 @@ There are also statistical motivations for choosing a deep model.
  as a useful prior).
 \end_layout
 
+\begin_layout Subsection
+Other Architectural considerations
+\end_layout
+
 \begin_layout Standard
+Another consideration is exactly hoe to connect a pair of layers to each
+ other.
+ Instead of the default fully connected, specialized networks (
+\emph on
+i.e.
+
+\emph default
+ convolutional) have fewer connections.
+ These strategies reduce the number of parameters but are highly problem-depende
+nt.
+\end_layout
+
+\begin_layout Section
+Back-Propagation and other differentiation algorithms
+\end_layout
+
+\begin_layout Standard
+The term backpropagation refers only to the method fot computing the gradient
+ (with a simple and inexpensive procedure), which is used in SGD to perform
+ learning.
+ The gradient we most often require is that of the cost function with respect
+ to the parameters, 
+\begin_inset Formula $\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)$
+\end_inset
+
+.
+ BP can also be applied to other tasks that involve computing derivatives.
+\end_layout
+
+\begin_layout Subsection
+Computational graphs
+\end_layout
+
+\begin_layout Standard
+We use each node to describe a variable.
+ An 
+\emph on
+operation
+\emph default
+ is a simple function of one or more variables.
+ We specify a set of allowable operations, with more complicated functions
+ describable by composition [without loss of generality, we will work here
+ with operations with a single return variable].
+ If a variable 
+\begin_inset Formula $y$
+\end_inset
+
+ results from the output of an operation applied to 
+\begin_inset Formula $x$
+\end_inset
+
+.
+ We draw a directed edge from 
+\begin_inset Formula $x$
+\end_inset
+
+ to 
+\begin_inset Formula $y$
+\end_inset
+
+, labeled by the operation.
+\end_layout
+
+\begin_layout Subsection
+Chain rule of calculus
+\end_layout
+
+\begin_layout Standard
+BP computes the chain rule, with a specific order of operations that is
+ highly efficient.
+ 
+\begin_inset Formula 
+\[
+\pdev z{x_{i}}=\pdev z{y_{j}}\pdev{y_{j}}{x_{i}}\text{ or }\grad_{\boldsymbol{x}}z=\left(\pdev{\boldsymbol{y}}{\boldsymbol{x}}\right)^{\dagger}\grad_{\boldsymbol{y}}z
+\]
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+This will usually be applied to tensors.
+ We denote the gradient of 
+\begin_inset Formula $z$
+\end_inset
+
+ with respect to a tensor 
+\begin_inset Formula $\mathsf{X}$
+\end_inset
+
+ as 
+\begin_inset Formula $\grad_{\mathsf{X}}z$
+\end_inset
+
+; we can use a single index 
+\begin_inset Formula $i$
+\end_inset
+
+ to represent the full tuple of indices, thus representing 
+\begin_inset Formula $\left(\grad_{\mathsf{X}}z\right)_{i}=\pdev z{\mathsf{X}_{i}}$
+\end_inset
+
+.
+ We can then write the chain rule as 
+\begin_inset Formula 
+\[
+\grad_{\mathsf{X}}z=\left(\grad_{\mathsf{X}}\mathsf{Y}_{j}\right)\pdev z{\mathsf{Y}_{j}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Recursively applying the chain rule to obtain backpropagation
+\end_layout
+
+\begin_layout Standard
+Actually computing the gradient with the chain rule includes many subexpressions
+ that may be repeated several times within the overall expression of the
+ gradient.
+ For complicated graphs, there can be exponentially many repetitions, thus
+ creating some necessity to store them.
+\end_layout
+
+\begin_layout Standard
+We now consider BP that specifies the actual gradient computation, but recursive
+ly applying the chain rule.
+\begin_inset Newline newline
+\end_inset
+
+We consider a computational graph to compute 
+\begin_inset Formula $u^{(n)}$
+\end_inset
+
+ (
+\emph on
+e.g.
+ 
+\emph default
+the loss function) with 
+\begin_inset Formula $n_{i}$
+\end_inset
+
+ inputs 
+\begin_inset Formula $u^{(i)}$
+\end_inset
+
+ with 
+\begin_inset Formula $i=1,...,n_{i}$
+\end_inset
+
+; we wish to compute 
+\begin_inset Formula $\pdev{u^{(n)}}{u^{(i)}}$
+\end_inset
+
+ (these inputs correspond to the model parameters).
+\begin_inset Newline newline
+\end_inset
+
+We assume the graph lets us compute their outputs 
+\begin_inset Formula $u^{(n_{I}+i)}$
+\end_inset
+
+ up to 
+\begin_inset Formula $u^{(n)}$
+\end_inset
+
+; each associated with an operation 
+\begin_inset Formula $u^{(i)}=f^{(i)}\left(\boldsymbol{A}^{(i)}\right)$
+\end_inset
+
+, where 
+\begin_inset Formula $\boldsymbol{A}^{(i)}=\text{Pa}\left(u^{(i)}\right)$
+\end_inset
+
+ is the set of parent nodes to 
+\begin_inset Formula $u^{(i)}$
+\end_inset
+
+.
+ The forward computation defines a graph 
+\begin_inset Formula $\mathcal{G}$
+\end_inset
+
+ of all computed nodes.
+ To perform BP, we can extend 
+\begin_inset Formula $\mathcal{G}$
+\end_inset
+
+ into 
+\begin_inset Formula $\mathcal{B}$
+\end_inset
+
+, containing all nodes.
+ Each node in 
+\begin_inset Formula $\mathcal{B}$
+\end_inset
+
+ computes the derivative 
+\begin_inset Formula $\pdev{u^{(n)}}{u^{(i)}}$
+\end_inset
+
+ associated with the forward node 
+\begin_inset Formula $u^{(i)}$
+\end_inset
+
+, using the chain rule
+\begin_inset Formula 
+\[
+\pdev{u^{(n)}}{u^{(j)}}=\sum_{i:j\in\text{Pa}\left(u^{(i)}\right)}\pdev{u^{(n)}}{u^{(i)}}\pdev{u^{(i)}}{u^{(j)}}
+\]
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula $\mathcal{B}$
+\end_inset
+
+ contains exactly one edge from 
+\begin_inset Formula $u^{(j)}$
+\end_inset
+
+ to 
+\begin_inset Formula $u^{(i)}$
+\end_inset
+
+ of 
+\begin_inset Formula $\mathcal{G}$
+\end_inset
+
+, associated with the computation of 
+\begin_inset Formula $\pdev{u^{(i)}}{u^{(j)}}$
+\end_inset
+
+.
+ A dot product is performed for each node, between the gradient already
+ computed for 
+\begin_inset Formula $u^{(i)}$
+\end_inset
+
+, children of 
+\begin_inset Formula $u^{(j)}$
+\end_inset
+
+, and the vector of partial derivatives of 
+\begin_inset Formula $u^{(j)}$
+\end_inset
+
+ with respect to its children 
+\begin_inset Formula $u^{(i)}$
+\end_inset
+
+.
+ The amount of computation scales linearly with the number of edges in 
+\begin_inset Formula $\mathcal{G}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+By storing a gradient table, BP performs one gradient 
+\begin_inset Formula $\pdev{u^{(i)}}{u^{(j)}}$
+\end_inset
+
+ for each node, thus avoiding the exponential explosion of repeated expressions
+ (with no regard to memory).
+\end_layout
+
+\begin_layout Subsection
+BP computation in fully-connected multilayer perceptron
+\end_layout
+
+\begin_layout Standard
+We consider the specific graph of a multi-layer MLP.
+\end_layout
+
+\begin_layout Paragraph
+Forward propagation:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\boldsymbol{h}^{(0)}=\boldsymbol{x}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\begin{cases}
+\text{for }k=1,...,l\text{ do}\\
+ & \boldsymbol{a}^{k}=\boldsymbol{b}^{k}+\boldsymbol{W}^{k}\boldsymbol{h}^{k-1}\\
+ & \boldsymbol{h}^{k}=f^{k}\left(\boldsymbol{a}^{k}\right)\\
+\text{end for}
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Backward propagation:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\boldsymbol{g}\leftarrow\grad_{\boldsymbol{y}}J=\grad_{\boldsymbol{y}}L\left(\boldsymbol{\hat{y}},\boldsymbol{y}\right)
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\begin{cases}
+\text{for }k=l,l-1,...,1\text{ do}\\
+\text{convert gradient on output into pre-activation} & \boldsymbol{g}\leftarrow\grad_{\boldsymbol{a}^{k}}J=\boldsymbol{g}\odot f'\left(\boldsymbol{a}^{k}\right)\\
+\text{compute gradient wrt weights and biases} & \grad_{\boldsymbol{b}^{k}}J=\boldsymbol{g}+\lambda\grad_{\boldsymbol{b}^{k}}\Omega\left(\boldsymbol{\theta}\right)\\
+ & \grad_{\boldsymbol{W}^{k}}J=\boldsymbol{g}\boldsymbol{h}^{(k-1)\dagger}+\lambda\grad_{\boldsymbol{W}^{k}}\Omega\left(\boldsymbol{\theta}\right)\\
+\text{propagate gradient wrt to the next layer's activationf} & \boldsymbol{g}=\grad_{\boldsymbol{h}^{k-1}}J=\boldsymbol{W}^{k\dagger}\boldsymbol{g}\\
+\text{end for}
+\end{cases}
+\]
+
+\end_inset
+
 
 \end_layout
 

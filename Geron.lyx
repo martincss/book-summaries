@@ -1,0 +1,649 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass extbook
+\use_default_options true
+\maintain_unincluded_children false
+\begin_local_layout
+Format 66
+InsetLayout Flex:Code
+    LyxType               charstyle
+    LabelString           code
+    LatexType             command
+    LatexName             code
+    Font
+      Family              Typewriter
+    EndFont
+    Preamble
+    \newcommand{\code}[1]{\texttt{#1}}
+    EndPreamble
+    InToc                 true
+    HTMLTag               code
+	ResetsFont true
+End
+\end_local_layout
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "utopia" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "default" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize 12
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 2cm
+\topmargin 2cm
+\rightmargin 2cm
+\bottommargin 2cm
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Hands-On Machine Learning: summary
+\end_layout
+
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\grad}{\boldsymbol{\nabla}}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\pdev}[2]{\dfrac{\partial#1}{\partial#2}}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Chapter*
+Chapter 10: Artificial Neural Networks
+\end_layout
+
+\begin_layout Standard
+Artificial neural networks (ANNs): Machine learning model inspired by networks
+ of biological neurons.
+ They are at the very core of Deep Learning: versatile, powerful and scalable.
+\end_layout
+
+\begin_layout Section
+From Biological to Artificial Neurons
+\end_layout
+
+\begin_layout Standard
+Reasons to believe this wave of interest in ANNs is more profound:
+\end_layout
+
+\begin_layout Itemize
+Huge quantity of data available to train & ANNs outperform other ML technologies
+ in large & complex problems
+\end_layout
+
+\begin_layout Itemize
+Tremendous increase in computing power since the 90s + GPU & cloud platforms
+\end_layout
+
+\begin_layout Itemize
+Training algorithms have improved (by small tweaks with huge impact)
+\end_layout
+
+\begin_layout Itemize
+Theoretical limitations have been mostly rare in practice
+\end_layout
+
+\begin_layout Itemize
+ANNs seem to have entered a virtuous cycle of funding & progress
+\end_layout
+
+\begin_layout Subsection
+Biological neurons
+\end_layout
+
+\begin_layout Standard
+Individual biological neurons seem to behave in a simple way, but are organized
+ in a network of billions, each connected to thousands of others.
+ Highly complex computations can emerge from their combines efforts.
+ It appears that biological neurons are organized in consecutive layers,
+ especially in the cerebral cortex.
+\end_layout
+
+\begin_layout Subsection
+Logical computations with neurons
+\end_layout
+
+\begin_layout Standard
+The first artificial neurons had only binary inputs & one binary output.
+ Each neuron's output is active if more than a certain number of inputs
+ are.
+ A network like this can compute complex logical expressions.
+\end_layout
+
+\begin_layout Subsection
+The Perceptron
+\end_layout
+
+\begin_layout Standard
+The 
+\emph on
+perceptron
+\emph default
+ is a simple ANN architecture composed by a single layer of 
+\bar under
+threshold logic unit
+\bar default
+ neurons.
+ Their inputs and output are now real numbers; each input connection is
+ associated with a weight.
+ The TLU computes a weighted sum of its inputs 
+\begin_inset Formula $\left(z=\boldsymbol{x}^{\dagger}\boldsymbol{w}\right)$
+\end_inset
+
+ and then applies a 
+\emph on
+step function
+\emph default
+.
+ Its output is thus 
+\begin_inset Formula $h_{\boldsymbol{w}}\left(\boldsymbol{x}\right)=\text{step}\left(z\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+A single TLU can be used for simple linear binary classification.
+ The perceptron contains a layer of TLUs.
+ each 
+\emph on
+fully connected
+\emph default
+ to all inputs and also containing a 
+\emph on
+bias
+\emph default
+ term.
+ Ir can thus perform multioutput binary classification: 
+\begin_inset Formula $h_{\boldsymbol{w},i}=\phi\left(\boldsymbol{X}\boldsymbol{W}+\boldsymbol{b}\right)$
+\end_inset
+
+, where 
+\begin_inset Formula $\phi$
+\end_inset
+
+ is the activation function (step for TLUs), 
+\series bold
+
+\begin_inset Formula $\boldsymbol{X}$
+\end_inset
+
+ 
+\series default
+is the input matrix 
+\begin_inset Formula $\left(n_{\text{instances}}\times n_{\text{features}}\right)$
+\end_inset
+
+, 
+\begin_inset Formula $\boldsymbol{W}$
+\end_inset
+
+ is the weights matrix 
+\begin_inset Formula $\left(n_{\text{features}}\times n_{\text{neurons}}\right)$
+\end_inset
+
+, and 
+\begin_inset Formula $\boldsymbol{b}$
+\end_inset
+
+ is the bias vector 
+\begin_inset Formula $\left(n_{\text{neurons}}\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The training is done in a way to reinforce connections that help reduce
+ the error.
+ The perceptron recieves one training instance at a time, and for each wrong
+ output neuron, reinforces weights from inputs that would have contributed
+ to the correct prediction: 
+\begin_inset Formula 
+\[
+w_{i,j}^{\text{next}}=w_{i,j}+\underset{\overbrace{\text{learning rate}}}{\eta}\underset{\overbrace{\text{0 or 1}}}{\left(y_{j}-\hat{y}_{j}\right)x_{i}}
+\]
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+If the training instances are 
+\emph on
+linearly separable
+\emph default
+, the algorithm is proven to converge to a (non unique) solution.
+ Contrary to logistic regression, these perceptrons do not output a class
+ probability.
+\end_layout
+
+\begin_layout Standard
+Limitations of perceptrons (such as the XOR problem) can be eliminated by
+ stacking multiple layers
+\end_layout
+
+\begin_layout Subsection
+The Multilayer Perceptron and Backpropagation
+\end_layout
+
+\begin_layout Standard
+A MLP is comprised of an input layer, an output layer and several 
+\emph on
+hidden
+\emph default
+ layers.
+ Each layer except for the output) is fully connected (layers close to the
+ input are called 
+\emph on
+lower
+\emph default
+).
+ 
+\end_layout
+
+\begin_layout Standard
+The training algorithm is known as 
+\series bold
+backpropagation
+\series default
+: gradient descent with an efficient technique for 
+\bar under
+computing gradients automatically
+\bar default
+ (
+\emph on
+autodiff
+\emph default
+).
+ In a forward and a backward pass, the algorithm is able to compute the
+ gradient with respect to every model parameter.
+\end_layout
+
+\begin_layout Paragraph
+Algorithm breakdown
+\end_layout
+
+\begin_layout Enumerate
+Handles one mini-batch at a time, and goes through full training set multiple
+ times (each pass is called an 
+\emph on
+epoch
+\emph default
+).
+\end_layout
+
+\begin_layout Enumerate
+For each instance in the mini-batch, the output is computed in a 
+\emph on
+forward-pass
+\emph default
+ (intermediate results from all layers are preserved since they are needed
+ for the backward pass).
+\end_layout
+
+\begin_layout Enumerate
+The output error is measured using the loss function
+\end_layout
+
+\begin_layout Enumerate
+Then it computes each output connection's contribution to the error.
+ This is done analytically using the chain rule.
+\end_layout
+
+\begin_layout Enumerate
+It now calculates the error contributions from the weights on the layer
+ below (also with the chain rule); this is repeated working backwards to
+ the input layer
+\end_layout
+
+\begin_layout Enumerate
+Finally, a gradient step is performed to update all weights
+\end_layout
+
+\begin_layout Standard
+It is important that all weights be initialized randomly, or else the training
+ will fail (a 
+\emph on
+symmetry breaking
+\emph default
+ is required).
+\end_layout
+
+\begin_layout Standard
+In order for the algorithm to work, the step function must be smoothed to
+ have a well-defined non-zero derivative, thus allowing GD to make some
+ progress at every step.
+ A first replacement is the sigmoid function 
+\begin_inset Formula $\sigma\left(z\right)=\dfrac{1}{1+\exp\left(-z\right)}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subparagraph
+Other choices:
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\tanh\left(z\right)=2\sigma\left(2z\right)-1$
+\end_inset
+
+; similar to the logistic, but with output in 
+\begin_inset Formula $[-1,1]$
+\end_inset
+
+.
+ This tends to make each output mostly centered around 
+\begin_inset Formula $0$
+\end_inset
+
+ at the beginning of training, which helps speed up the convergence.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\text{ReLU}\left(z\right)=\max\left(0,z\right)$
+\end_inset
+
+; derivative jumps at 
+\begin_inset Formula $z=0$
+\end_inset
+
+, which can make GD bounce; but works well and is very fast to compute.
+ Its unbounded image helps reduce some issues during GD.
+\end_layout
+
+\begin_layout Standard
+Nonlinearities introduced by activation functions are essential to the complexit
+y of the model.
+ A large enough DNN can theoretically approximate any continuous function.
+\end_layout
+
+\begin_layout Subsection
+Regression MLPs
+\end_layout
+
+\begin_layout Standard
+One output neuron per output dimension (
+\emph on
+e.g.: 
+\emph default
+2 for locating the center of an object in an image; another 2 for a bounding
+ box (height and width)).
+ Usually no activation at the output, except for ReLU/
+\begin_inset Formula $\text{softplus}\left(z\right)=\log\left[1+\exp\left(z\right)\right]$
+\end_inset
+
+ to restrict it to positive images; or 
+\begin_inset Formula $\sigma$
+\end_inset
+
+/tanh to bound it.
+\end_layout
+
+\begin_layout Standard
+Training loss is typically MSE, or MAE/Huber (a combination of both) if
+ there are many training outliers.
+ The number of hidden layers is usually 
+\begin_inset Formula $\sim1-5$
+\end_inset
+
+, and the neurons per layer are 
+\begin_inset Formula $\sim10-100$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+Classification MLPs
+\end_layout
+
+\begin_layout Standard
+For each binary classification, a single output neuron with logistic activation
+ is used, which can be interpreted as the estimated probability of the positive
+ class.
+\end_layout
+
+\begin_layout Standard
+For single output multiclass classification, an output neuron per class
+ is needed, and a softmax activation for the whole layer (which estimates
+ each class' probability)
+\end_layout
+
+\begin_layout Standard
+The training loss function is generally multiclass cross-entropy.
+ The rest of the architecture is broadly the same as with regression.
+\end_layout
+
+\begin_layout Section
+Implementing MLPs with Keras
+\end_layout
+
+\begin_layout Standard
+Keras is a high-level Deep learning API with several backends.
+ TensorFlow comes bundled with its own implementation, 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+tf.keras
+\end_layout
+
+\end_inset
+
+, which has many advantages (
+\emph on
+e.g.
+
+\emph default
+ TF's Data API to load and preprocess data efficiently).
+\end_layout
+
+\begin_layout Subsection
+Building an image classifier using the 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+Sequential
+\end_layout
+
+\end_inset
+
+ API
+\end_layout
+
+\begin_layout Standard
+We use Fashion MNIST (70k grayscale 
+\begin_inset Formula $28\times28$
+\end_inset
+
+ images, 10 classes).
+ Since we will be using GD, we scale the input features.
+\end_layout
+
+\begin_layout Paragraph
+Creating the model
+\end_layout
+
+\begin_layout Standard
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+model = keras.models.Sequential()
+\end_layout
+
+\end_inset
+
+ is the simplest model, for a single stack of layers connected sequentially
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+model.add(keras.layers.Flatten(input_shape = [28,28]))
+\end_layout
+
+\end_inset
+
+ converts the image to a 1D array.
+ As is the first layer, we must pass the 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+input_shape
+\end_layout
+
+\end_inset
+
+ (for a single instance)
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+model.add(keras.layers.Dense(#neurons, activation = 'relu'))
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Instead of adding layers by one, it is possible to pass them as a list to
+ the 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+Sequential
+\end_layout
+
+\end_inset
+
+ constructor.
+\end_layout
+
+\begin_layout Subsubsection
+Inspection
+\end_layout
+
+\begin_layout Standard
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+model.summary()
+\end_layout
+
+\end_inset
+
+displays the layers (by name), along with their parameters.
+ 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+model.layers
+\end_layout
+
+\end_inset
+
+ returns them as a list, but they can also be called by name as 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+model.get_layer('dense')
+\end_layout
+
+\end_inset
+
+.
+ Its parameters can be retrieved by 
+\end_layout
+
+\end_body
+\end_document

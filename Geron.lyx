@@ -643,6 +643,896 @@ model.get_layer('dense')
 
 .
  Its parameters can be retrieved by 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+weights, biases = layer.get_weights()
+\end_layout
+
+\end_inset
+
+.
+ For a custom initialization, when creating the layer we can set 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+kernel_initializer
+\end_layout
+
+\end_inset
+
+ or 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+bias_initializer
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection
+Compiling the model
+\end_layout
+
+\begin_layout Standard
+The method must be called to specify the loss function and optimizer: 
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+model.compile(loss = 'sparse_categorical_crossentropy', optimizer = 'sgd',
+ metrics = ['accuracy'])
+\end_layout
+
+\end_inset
+
+.
+ The 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+metrics
+\end_layout
+
+\end_inset
+
+ arg corresponds the list of metrics to be computed during training and
+ evalutation.
+ The loss function here is due to exclusive classes and the class given
+ by a single index (this is considered 
+\emph on
+sparse
+\emph default
+).
+ If class were given by a one-hot vector instead, we use 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+categorical_crossentropy
+\end_layout
+
+\end_inset
+
+.
+ To convert sparse to one-hot, 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+keras.utils.to_categorical()
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Training and evaluating
+\end_layout
+
+\begin_layout Standard
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+history = model.fit(X_train, y_train, epochs, validation_data = (X_val,y_val))
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+With class imbalance, we can set the 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+class_weigths
+\end_layout
+
+\end_inset
+
+ (and even 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+sample_weight
+\end_layout
+
+\end_inset
+
+) arguments in the 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+fit
+\end_layout
+
+\end_inset
+
+ method.
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+fit
+\end_layout
+
+\end_inset
+
+ method returns a 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+History
+\end_layout
+
+\end_inset
+
+ object with the training parameters (
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+history.params
+\end_layout
+
+\end_inset
+
+) and a dictrionary 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+history.history
+\end_layout
+
+\end_inset
+
+ containing the loss and metrics computed during training.
+ This can be easily put in a dataframe toplot the learning curve (the training
+ curve should be shifted to the left by half an epoch).
+ The 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+fit
+\end_layout
+
+\end_inset
+
+ method resumes training from last state if called multiple times.
+\end_layout
+
+\begin_layout Standard
+To increase performance, the first hyperparameter to be tuned should be
+ the learning rate; if that doesn't help, changing the optimizer.
+ After that, the architecture and activation functions.
+ Finally, we can evaluate the model with 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+model.evaluate(X_test,y_test)
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Building complex models using the 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+Functional
+\end_layout
+
+\end_inset
+
+ API
+\end_layout
+
+\begin_layout Standard
+To build models with more complex topologies, multiple inputs or outputs,
+ keras offers the 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+Functional
+\end_layout
+
+\end_inset
+
+ API.
+ Each layer must be defined as a separate object, specifying its input
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+input_ = keras.layers.Input(shape=[...])
+\end_layout
+
+\end_inset
+
+ an 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+Input
+\end_layout
+
+\end_inset
+
+ object must be defined (even more than one if necessary)
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+hidden = Dense(neurons, activation = 'relu')(input_)
+\end_layout
+
+\end_inset
+
+ the input to this layer is passed by calling it as a function
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+concat = keras.layers.Concatenate()([input_, hidden])
+\end_layout
+
+\end_inset
+
+ layer which concatenates inputs
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+model = keras.Model(inputs = [input_], outputs = [output])
+\end_layout
+
+\end_inset
+
+ we create the model, specifying input(s) and output(s).
+ The model can then be compiled and trained.
+\begin_inset Newline newline
+\end_inset
+
+With multiple inputs, the 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+fit
+\end_layout
+
+\end_inset
+
+ method must be supplied with a tuple (or dictionary) of input matrices.
+ 
+\begin_inset Newline newline
+\end_inset
+
+Multiple outputs may be needed in many cases:
+\end_layout
+
+\begin_layout Itemize
+The task may demand it; as in object location and identification (regression
+ for a bounding box, classification to identify).
+\end_layout
+
+\begin_layout Itemize
+Multiple independent tasks on the same data; the network can learn features
+ in the data that are useful across tasks.
+\end_layout
+
+\begin_layout Itemize
+It can be used as a regularization technique, for example, by adding an
+ auxiliary output from middle layers, to ensure the underlying part learn
+ something useful.
+\end_layout
+
+\begin_layout Itemize
+Each output needs its own loss function.
+ These will be added to obtain the total loss used in training, The losses
+ will be passed as a list to the 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+fit
+\end_layout
+
+\end_inset
+
+ method, along with a list of 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+loss_weights
+\end_layout
+
+\end_inset
+
+ to perform a weighted sum instead.
+ As with inputs, a tuple of targets must be supplied.
+\end_layout
+
+\begin_layout Subsection
+Using the 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+Subclassing
+\end_layout
+
+\end_inset
+
+ API to build dynamic models
+\end_layout
+
+\begin_layout Standard
+To create models with even greater flexibility (
+\emph on
+e.g.
+ 
+\emph default
+loops, varying shapes, dynamical behaviours), we may use the subclassing
+ API:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "language=Python,basicstyle={\ttfamily},tabsize=4"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+class CustomModel(keras.Model): 		#inherit from base class
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+	def __init__(self, ..., **kwargs):	  
+\end_layout
+
+\begin_layout Plain Layout
+
+		super().__init__(**kwargs) 	 #handles standard args(e.g.
+ name)
+\end_layout
+
+\begin_layout Plain Layout
+
+		# all layers should be created in the constructor
+\end_layout
+
+\begin_layout Plain Layout
+
+		self.hidden = ...
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+	def call(self, inputs):
+\end_layout
+
+\begin_layout Plain Layout
+
+	# all computations performed here (input need not be created, 
+\end_layout
+
+\begin_layout Plain Layout
+
+	# just passed to the call method)
+\end_layout
+
+\begin_layout Plain Layout
+
+		...
+\end_layout
+
+\begin_layout Plain Layout
+
+	return outputs
+\end_layout
+
+\end_inset
+
+The extra flexibility's cost is that the model architecture is hidden in
+ 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+call
+\end_layout
+
+\end_inset
+
+, so keras cannot easily inspect it, save it or clone it.
+\begin_inset Newline newline
+\end_inset
+
+Keras models can be used like regular layers to combine them.
+\end_layout
+
+\begin_layout Subsection
+Saving and restoring a model
+\end_layout
+
+\begin_layout Standard
+With the 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+Sequential
+\end_layout
+
+\end_inset
+
+ or 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+Functional
+\end_layout
+
+\end_inset
+
+ API, a model can be saved to HDF5 using 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+model.save(fname)
+\end_layout
+
+\end_inset
+
+.
+ This saves the architecture, parameters for every layer and optimizer.
+\begin_inset Newline newline
+\end_inset
+
+It can be loaded using 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+keras.models.load_model
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+This won't work with subclassing, but model parameters can be saved with
+ 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+save_weights
+\end_layout
+
+\end_inset
+
+ (also loaded with 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+load_weights
+\end_layout
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Subsection
+Using Callbacks
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+fit
+\end_layout
+
+\end_inset
+
+ method accepts a list of objects in the 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+callbacks
+\end_layout
+
+\end_inset
+
+ argument, which will be called at the start and end of training, or each
+ epoch or batch.
+\end_layout
+
+\begin_layout Subsubsection
+Model checkpoint
+\end_layout
+
+\begin_layout Standard
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+checkpoint_cb = keras.callbacks.ModelCheckpoint(fname, save_best_only=True)
+\end_layout
+
+\end_inset
+
+ the callback saves the model at regular intervals during training (by default
+ at the end of each epoch).
+ 
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+save_best_only=True
+\end_layout
+
+\end_inset
+
+ will only make the checkpoint when the performance on the validation set
+ is the best so far.
+\end_layout
+
+\begin_layout Subsubsection
+Early Stopping
+\end_layout
+
+\begin_layout Standard
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+early_stopping_cb = keras.callbacks.EarlyStopping(patience)
+\end_layout
+
+\end_inset
+
+ will interrupt training when it measures no progress on validation during
+ a number of epochs (given by 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+patience
+\end_layout
+
+\end_inset
+
+).
+ The best model can be restored enabling 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+restore_best_weights=True
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection
+Custom Callbacks
+\end_layout
+
+\begin_layout Standard
+We can create callbacks by inheriting from the base class
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "language=Python,basicstyle={\ttfamily},tabsize=4"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+class CustomCallback(keras.callbacks.Callback):
+\end_layout
+
+\begin_layout Plain Layout
+
+	def on_epoch_end(self, epoch, logs):
+\end_layout
+
+\begin_layout Plain Layout
+
+		print(logs['val_loss'])
+\end_layout
+
+\end_inset
+
+options include 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+on_train_end
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+on_batch_end
+\end_layout
+
+\end_inset
+
+, etc.
+ Also ones only with evaluate, predict.
+\end_layout
+
+\begin_layout Subsection
+Using TensorBoard for visualization
+\end_layout
+
+\begin_layout Standard
+TensorBoard is an interactive visualization tool to view learning curves
+ during training, compare them between runs, visualize the computation graph,
+ training statistics & multidimensional data projected to 3D (and more).
+\begin_inset Newline newline
+\end_inset
+
+To use it, the model must generate binary 
+\emph on
+event files
+\emph default
+, The TB server monitors a log directory; it is useful to have a different
+ subdir for each run.
+ The TB callback must be used to generate the files:
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+tensorboard_cb = keras.callback.TensorBoard(run_logdir)
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+The server can be called with 
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+%load_ext tensorboard
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+%tensorboard –logdir=./my_logs –port=6006
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+TF also has a low-level API to manually write logs (
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+tf.summary
+\end_layout
+
+\end_inset
+
+)
+\end_layout
+
+\begin_layout Section
+Fine-tuning neural network hyperparameters
+\end_layout
+
+\begin_layout Standard
+The main drawback of the flexibility of ANNs is the number of hyperparameters
+ to tweak.
+ There are some options to find the best combination.
+\begin_inset Newline newline
+\end_inset
+
+One option is to try many combinations using grid or random search and measuring
+ on the validation set (or using k-fold cross validation).
+ To work with the scikit-learn API, we use a wrapper to treat models as
+ sklearn estimators:
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+keras_reg = keras.wrappers.scikit_learn.KerasRegressor(build_model)
+\end_layout
+
+\end_inset
+
+ where 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+build_model
+\end_layout
+
+\end_inset
+
+ is function that takes a set og hyperparameters and returns a compiled
+ model.
+\begin_inset Newline newline
+\end_inset
+
+Random search works well for fairly simple problems, but when training is
+ slow, it will only explore a tiny portion of hyperparameter space.
+\end_layout
+
+\begin_layout Standard
+Other approaches 
+\begin_inset Quotes eld
+\end_inset
+
+zoom in
+\begin_inset Quotes erd
+\end_inset
+
+ when a region in the space turns out to be good; there are several libraries
+ for this purpose
+\end_layout
+
+\begin_layout Subsection
+Number of hidden layers
+\end_layout
+
+\begin_layout Standard
+For simple problems, a single hidden layer may be enough; but for complex
+ problems, deep networks have a much higher 
+\emph on
+parameter efficiency
+\emph default
+ than shallow ones: they can model complex functions using exponentially
+ fewer neurons.
+\end_layout
+
+\begin_layout Standard
+Deep networks can model the hierarchical structure of data: lower layers
+ encode low-level features, and higher layers combine them to model high-level,
+ more abstract structures (
+\emph on
+e.g.
+
+\emph default
+ from line segments to faces).
+ This can also help the model generalize to other datasets.
+ For example, we may reuse the lower layers from a model already trained
+ to recognize faces to train a new model to recognize hairstyles
 \end_layout
 
 \end_body

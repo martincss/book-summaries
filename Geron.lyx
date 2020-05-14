@@ -48,7 +48,16 @@ End
 \index_command default
 \paperfontsize 12
 \spacing single
-\use_hyperref false
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks true
+\pdf_backref false
+\pdf_pdfusetitle true
 \papersize default
 \use_geometry true
 \use_package amsmath 1
@@ -1533,6 +1542,438 @@ e.g.
  This can also help the model generalize to other datasets.
  For example, we may reuse the lower layers from a model already trained
  to recognize faces to train a new model to recognize hairstyles
+\end_layout
+
+\begin_layout Chapter*
+Chapter 11: Training Deep Neural Networks
+\end_layout
+
+\begin_layout Standard
+Training a DNN (10+ layers), each with 100s of neurons and 100000s of connection
+s can incur many problems:
+\end_layout
+
+\begin_layout Itemize
+
+\emph on
+Vanishing/exploding gradients 
+\emph default
+problem, which make lower layers very hard to train.
+\end_layout
+
+\begin_layout Itemize
+Not enough training data for such a large network, or too costly to label.
+\end_layout
+
+\begin_layout Itemize
+Training may be extremely slow
+\end_layout
+
+\begin_layout Itemize
+A model with millions of parameters would severely risk overfitting, if
+ there are not enough training instances
+\end_layout
+
+\begin_layout Section
+The Vanishing/exploding gradients problems
+\end_layout
+
+\begin_layout Standard
+BP works by propagating the error gradient from the output to the input
+ layer.
+ However, gradients often get smaller as the algorithm progressed to the
+ lower layers: thus the GD update is not significant and training cannot
+ converge to a good solution.
+ Likewise, the gradients can grow bigger and the algorithm diverges.
+\begin_inset Newline newline
+\end_inset
+
+This behaviour was addressed in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "glorot10"
+literal "false"
+
+\end_inset
+
+.
+ Using a sigmoid activation and 
+\begin_inset Formula $\mathcal{N}\left(0,1\right)$
+\end_inset
+
+ weight initialization causes weight variance to grow with layer depth.
+ causing the activations to saturate.
+ This implies the gradient is close to 0 dilutes further with BP.
+\end_layout
+
+\begin_layout Subsection
+Glorot and He initialization
+\end_layout
+
+\begin_layout Standard
+In 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "glorot10"
+literal "false"
+
+\end_inset
+
+, they argue that the variance of the outputs of each layer needs to be
+ equal to the variance of its inputs, and the same condition is needed for
+ the variance of the gradients before and after backflowing through the
+ layer, for the signal to flow properly in both directions.
+ This cannot be guaranteed when #inputs (
+\emph on
+fan-in
+\emph default
+) is not equal to the #outputs (
+\emph on
+fan-out
+\emph default
+), but a good compromise can be made
+\end_layout
+
+\begin_layout Subsubsection
+Glorot/Xavier initialization (when using logistic activation)
+\end_layout
+
+\begin_layout Standard
+Weights to be sampled from a normal distribution 
+\begin_inset Formula $\mathcal{N}\left(0,\sigma^{2}\right)$
+\end_inset
+
+, with 
+\begin_inset Formula $\sigma^{2}=\dfrac{1}{\text{fan}_{\text{avg}}}$
+\end_inset
+
+; or from a uniform distribution 
+\begin_inset Formula $U[-r,r]$
+\end_inset
+
+, with 
+\begin_inset Formula $r=\sqrt{\dfrac{3}{\text{fan}_{\text{avg}}}}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+He initialization (when using ReLU & variants)
+\end_layout
+
+\begin_layout Standard
+Same as Glorot, but using 
+\begin_inset Formula $\sigma^{2}=\dfrac{2}{\text{fan}_{\text{in}}}$
+\end_inset
+
+, or uniform using 
+\begin_inset Formula $r=\sqrt{3\sigma^{2}}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+LeCun initialization (when using SELU):
+\end_layout
+
+\begin_layout Standard
+Only normal distribution with 
+\begin_inset Formula $\sigma^{2}=\dfrac{1}{\text{fan}_{\text{in}}}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+By default.
+ keras uses uniform Glorot.
+ When creating a layer, the initializer can be set with 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+kernel_initializer='he_normal'
+\end_layout
+
+\end_inset
+
+, for instance.
+ A custom initialization can be done with (e.g.
+ He average)
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset listings
+lstparams "language=Python,basicstyle={\ttfamily},tabsize=4"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+he_avg_init=keras.initializers.VarianceScaling(scale=2.,
+\end_layout
+
+\begin_layout Plain Layout
+
+								mode='fan_avg',
+\end_layout
+
+\begin_layout Plain Layout
+
+								distribution='uniform')
+\end_layout
+
+\end_inset
+
+and this object must be passed to the 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+kernel_initializer
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+Nonsaturating activation functions
+\end_layout
+
+\begin_layout Standard
+Due to the lack of saturation, ReLUs work better than sigmoid in DNNs.
+ However, during training some neurons may 
+\begin_inset Quotes eld
+\end_inset
+
+die
+\begin_inset Quotes erd
+\end_inset
+
+, outputting nothing than 0, anulling their gradients too.
+ This may be solved using a 
+\emph on
+leaky
+\emph default
+ ReLU, with a small slope 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ for 
+\begin_inset Formula $z<0$
+\end_inset
+
+.
+ This ensures the unitrs never 
+\begin_inset Quotes eld
+\end_inset
+
+die
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset citation
+LatexCommand cite
+key "bingxu15"
+literal "false"
+
+\end_inset
+
+ concluded leaky ReLUs always outperform strict ones, even working better
+ with 
+\begin_inset Formula $\alpha\sim0.2$
+\end_inset
+
+ instead of 
+\begin_inset Formula $\sim0.01$
+\end_inset
+
+.
+ The paper also evaluated the 
+\emph on
+randomized leaky
+\emph default
+ ReLU (setting a random 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ during training and fixing to an average during test), which performed
+ fairly well and seemed to act as a regularizer.
+\begin_inset Newline newline
+\end_inset
+
+The paper also evaluated the PReLU, where 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ is an hyperparameter.
+ It is reported to outperform ReLUs on large image datasets, but runs the
+ risk of overfitting on smaller ones.
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset citation
+LatexCommand cite
+key "clevert2015"
+literal "false"
+
+\end_inset
+
+ proposed the 
+\emph on
+exponential linear unit 
+\emph default
+(ELU) that outperformed ReLU in both training time and test score.
+ ELU:
+\end_layout
+
+\begin_layout Itemize
+Takes on negative values with 
+\begin_inset Formula $z<0$
+\end_inset
+
+, which allows the unit to have an average output closer to 0, and helps
+ with vanishing gradients.
+ The asympote negative value is an hyperparameter.
+\end_layout
+
+\begin_layout Itemize
+It has nonzero gradient for 
+\begin_inset Formula $z<0$
+\end_inset
+
+, which helps avoid dead neurons.
+\end_layout
+
+\begin_layout Itemize
+With the hyperparameter 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ it is smooth everywhere, helps speed up GD
+\end_layout
+
+\begin_layout Standard
+The main drawback is the slower computation than ReLU; but its faster convergenc
+e rate compensates for that during training (not so during evaluation).
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset citation
+LatexCommand cite
+key "klambauer2017"
+literal "false"
+
+\end_inset
+
+ introduced the scaled ELU (SELU).
+ The authors showed that a nn built only from a stack of dense layers, using
+ only SELU will 
+\emph on
+self-normalize
+\emph default
+: the output of each layer will tend to preserve a mean of 0 and a variance
+ of 1 during training, which solves both gradient problems.
+ SELU often outperforms other activation functions, but there are a few
+ conditions for self-normalization:
+\end_layout
+
+\begin_layout Enumerate
+Input features must be standarized (mean 0, std 1)
+\end_layout
+
+\begin_layout Enumerate
+Every hidden layer initialized with LeCun normal
+\end_layout
+
+\begin_layout Enumerate
+Network architecture must be sequential.
+ In RNN or other architectures, self-normalization cannot be guaranteed.
+\end_layout
+
+\begin_layout Standard
+The paper only guarantees self-normalization if all layers are dense.
+ but it has been noted that SELU can improve performance in CNNs.
+\end_layout
+
+\begin_layout Standard
+In general, SELU > ELU > leaky ReLU > tanh > sigmoid.
+ When caring about runtime, leaky ReLU may be preferred, even with default
+ 
+\begin_inset Formula $\alpha=0.3$
+\end_inset
+
+ (keras).
+ ELU may perform better than SELU if self-normalization is not possible.
+ RReLU may be used when overfitting or PReLU with a huge training set.
+\end_layout
+
+\begin_layout Standard
+In keras, leaky ReLU and PReLU must be added as layers:
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+keras.layers.LeakyReLU(alpha)
+\end_layout
+
+\end_inset
+
+ or 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+PReLU()
+\end_layout
+
+\end_inset
+
+.
+ SELU can be set as 
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+Dense(units, activation='selu', kernel_initializer='lecun_normal')
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Batch normalization
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+btprint "btPrintCited"
+bibfiles "bibliography"
+options "apalike"
+
+\end_inset
+
+
 \end_layout
 
 \end_body

@@ -128,8 +128,24 @@ Hands-On Machine Learning: summary
 
 \end_layout
 
-\begin_layout Chapter*
-Chapter 10: Artificial Neural Networks
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+setcounter{chapter}{9}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Chapter
+Artificial Neural Networks
 \end_layout
 
 \begin_layout Standard
@@ -1544,8 +1560,8 @@ e.g.
  to recognize faces to train a new model to recognize hairstyles
 \end_layout
 
-\begin_layout Chapter*
-Chapter 11: Training Deep Neural Networks
+\begin_layout Chapter
+Training Deep Neural Networks
 \end_layout
 
 \begin_layout Standard
@@ -1962,6 +1978,468 @@ Dense(units, activation='selu', kernel_initializer='lecun_normal')
 
 \begin_layout Subsection
 Batch normalization
+\end_layout
+
+\begin_layout Standard
+The former strategies can reduce the danger of vanishing/exploding gradients
+ at the beginning of training, there is no guarantee they won't come back
+ during training.
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset citation
+LatexCommand cite
+key "ioffe2015batch"
+literal "false"
+
+\end_inset
+
+ proposed 
+\series bold
+batch normalization 
+\series default
+to address these problems.
+ The technique adds a new operation as a layer, to be used before or after
+ the activation on each hidden layer.
+ Each input feature is zero-centered and normalized, then re-scaled and
+ centered using two learnable parameters (per input per layer).
+ The model can thus learn the optimal scale and mean of each of the layer's
+ inputs.
+\end_layout
+
+\begin_layout Standard
+The algorithm estimates the input's mean and std on each mini-batch:
+\begin_inset Formula 
+\begin{align*}
+1\; & \boldsymbol{\mu}_{B}=\dfrac{1}{m_{B}}\sum_{i=1}^{m_{b}}\boldsymbol{x}^{(i)}\\
+2\; & \boldsymbol{\sigma}_{B}^{2}=\dfrac{1}{m_{B}}\sum_{i=1}^{m_{B}}\left(\boldsymbol{x}^{(i)}-\boldsymbol{\mu}_{B}\right)^{2}\\
+3\; & \boldsymbol{\hat{x}}^{(i)}=\dfrac{\boldsymbol{x}^{(i)}-\boldsymbol{\mu}_{B}}{\sqrt{\boldsymbol{\sigma}_{B}^{2}+\varepsilon}}\\
+4\; & \boldsymbol{z}^{(i)}=\boldsymbol{\gamma}\otimes\boldsymbol{x}^{(i)}+\boldsymbol{\beta}
+\end{align*}
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula $m_{B}$
+\end_inset
+
+ is the mini-batch size, 
+\begin_inset Formula $\varepsilon$
+\end_inset
+
+ is a smoothing term 
+\begin_inset Formula $\sim10^{-5}$
+\end_inset
+
+, 
+\begin_inset Formula $\boldsymbol{z}^{(i)}$
+\end_inset
+
+ is the BN output and 
+\begin_inset Formula $\boldsymbol{\gamma}\;\boldsymbol{\beta}$
+\end_inset
+
+ are the output scale and shift parameters.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\boldsymbol{\mu}_{B}$
+\end_inset
+
+ and 
+\begin_inset Formula $\boldsymbol{\sigma}_{B}^{2}$
+\end_inset
+
+ are estimated for each batch furing training.
+ At test time, an estimation for the whole training set (accumulated during
+ training) is used.
+ Thus, four parameter vectors are learned: 
+\begin_inset Formula $\boldsymbol{\gamma},\;\boldsymbol{\beta},\;\boldsymbol{\mu},\;\boldsymbol{\sigma}^{2}$
+\end_inset
+
+ (the latter two used only after training).
+\end_layout
+
+\begin_layout Standard
+BN also acts as a regularizer, reducing the need for other techniques.
+ However, it does add some complexity to the model and has longer runtime.
+ Though after training it is possible to merge the BN with the previous
+ layer (by combining the parameters into new weights and biases).
+\end_layout
+
+\begin_layout Standard
+Training will be slower, as each epoch takes much mote time; but this is
+ counterbalanced by faster convergence, sot it will take fewer epochs to
+ reach the same performance.
+\end_layout
+
+\begin_layout Subsubsection
+Implementation in keras
+\end_layout
+
+\begin_layout Standard
+BN can be added as a layer, before or after each hidden layer's activation
+ function 
+\begin_inset Newline newline
+\end_inset
+
+(as 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+keras.layers.BatchNormaliztion()
+\end_layout
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+There is some debate whether the layer should be added before or after the
+ activation.
+ To add them before, the activation must be unspecified on the hidden layers
+ and added as a separate layer.
+ This allows us to remove bias from those layers with 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+use_bias=False
+\end_layout
+
+\end_inset
+
+, as BN already contains a shift.
+\end_layout
+
+\begin_layout Standard
+The layer contains a few hyperparameters; namely the 
+\series bold
+momentum (p)
+\series default
+, used when updating the exponential moving averages (for 
+\begin_inset Formula $\mu$
+\end_inset
+
+ and 
+\begin_inset Formula $\sigma$
+\end_inset
+
+)
+\begin_inset Formula 
+\[
+\boldsymbol{\begin{gathered}\hat{v}\end{gathered}
+}\leftarrow\boldsymbol{\hat{v}}\times p+\boldsymbol{v}\times(1-p)
+\]
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+where 
+\begin_inset Formula $\boldsymbol{\hat{v}}$
+\end_inset
+
+ is the running average and 
+\begin_inset Formula $\boldsymbol{v}$
+\end_inset
+
+ is the new value.
+ 
+\begin_inset Formula $p$
+\end_inset
+
+ is usually very close to 1 (0.9 or 0.99) (closer for larger datasets).
+\end_layout
+
+\begin_layout Standard
+Another hyperparameter is 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+axis
+\end_layout
+
+\end_inset
+
+, which indicates which axis to normalize.
+ Default is -1 (last axis), which works when input is 2D 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+[batch_size,features]
+\end_layout
+
+\end_inset
+
+.
+ Care should be taken when feeding unflattened 2D images, for instance.
+\end_layout
+
+\begin_layout Standard
+The different beahaviour when training and predicting is given by the 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+training
+\end_layout
+
+\end_inset
+
+ arg in the 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+call
+\end_layout
+
+\end_inset
+
+ method.
+ It is set to 1 when calling 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+fit
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+BN is near ubiquitous now, but 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "zhang2019fixup"
+literal "false"
+
+\end_inset
+
+ managed to train a very deep (10k layers) net without BN by using a 
+\emph on
+fixed-update
+\emph default
+ weight initialization scheme.
+\end_layout
+
+\begin_layout Subsection
+Gradient clipping
+\end_layout
+
+\begin_layout Standard
+Another technique to prevent exploding gradient is to limit the gradient
+ value below a threshold during BP.
+ This is most often used on RNNs, where BN is tricky, With keras,
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+keras.optimizers.SGD(clipvalue=1.0)
+\end_layout
+
+\end_inset
+
+ each gradient component will be limited to 
+\begin_inset Formula $\pm1.0$
+\end_inset
+
+ (which may change the direction).
+ To scale by the 
+\begin_inset Formula $\ell^{2}$
+\end_inset
+
+norm and preserve the direction, 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+clipnorm
+\end_layout
+
+\end_inset
+
+ may be used instead.
+\end_layout
+
+\begin_layout Section
+Reusing pretrained layers
+\end_layout
+
+\begin_layout Standard
+Instead of training a large DNN from scratch, it is usually a better idea
+ to find an existing one which accomplishes a similar task and reuse the
+ lower layers (
+\series bold
+\emph on
+transfer learning
+\series default
+\emph default
+).
+ This will speed up training and require significantly less training data.
+\end_layout
+
+\begin_layout Standard
+Transfer learning will work best when the inputs have similar low-level
+ features.
+ The upper hidden layers of the original model are less likely to be useful,
+ as the high-level features may differ significantly between tasks.
+ The more similar the tasks are, the more layers will be reusable.
+\end_layout
+
+\begin_layout Standard
+A first attemts would be to freeze (make their weights non trainable) all
+ reused layers and train & evaluate the model.
+ Then, unfreezing layers from the top, retraining and checking if performance
+ improves.
+ The more data available, the more layers we can unfreeze, It is useful
+ to reduce learning rate when unfreezing, as to avoid wrecking the fine-tuned
+ weights.
+\end_layout
+
+\begin_layout Subsection
+Transfer learning with keras
+\end_layout
+
+\begin_layout Standard
+Cloning a model to reuse:
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+model_A_clone = keras.models.clone_model(model_A)
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+model_A_clone.set_weights(model_A.get_weights())
+\end_layout
+
+\end_inset
+
+ (weights must be set manually).
+ Reusing all but the last layer:
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+model_B = Sequential(model_A.layers[:-1])
+\end_layout
+
+\end_inset
+
+.
+ Freezing layers:
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+for layer in model_B.layers: layer.trainable=False
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+Model must be always compiled after freezing/unfreezing.
+\end_layout
+
+\begin_layout Standard
+Transfer learning does not work very well with small dense networks, presumably
+ because they learn few, very specific patterns.
+ TL works best with deep CNN, which tend to learn more general feature detectors.
+\end_layout
+
+\begin_layout Subsection
+Unsupervised pretraining
+\end_layout
+
+\begin_layout Standard
+When tackling a complex task with few training data and no pretrained similar
+ model, we may be able to perform 
+\series bold
+unsupervised pretraining:
+\series default
+ With a large amount of unlabeled training data, an autoencoder or GAN can
+ be trained, and its lower layers reused for a supervised model (using an
+ output layer on top), fine-tuned with available data.
+\end_layout
+
+\begin_layout Subsection
+Pretraining on an auxiliary task
+\end_layout
+
+\begin_layout Standard
+Also with little training data, another option is to first train a nn on
+ an auxiliary task for which training data can be easily obtained or generated,
+ and then reuse that model's lower layers for the actual task.
+ This is done in NLP by training a model to predict missing words ins a
+ large corpus (
+\emph on
+i.e.
+
+\emph default
+ word2vec).
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+\emph on
+Self-supervised learning
+\series default
+\emph default
+ consists on automatically generating labels from the data itself, thus
+ counted as unsupervised.
+\end_layout
+
+\begin_layout Section
+Faster optimizers
+\end_layout
+
+\begin_layout Standard
+A further way to speed up training is by a faster optimizer than SGD.
 \end_layout
 
 \begin_layout Standard

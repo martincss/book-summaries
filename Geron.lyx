@@ -2442,6 +2442,337 @@ Faster optimizers
 A further way to speed up training is by a faster optimizer than SGD.
 \end_layout
 
+\begin_layout Subsection
+Momentum optimization
+\end_layout
+
+\begin_layout Standard
+Regular GD updates by 
+\begin_inset Formula $\boldsymbol{\theta}\leftarrow\boldsymbol{\theta}-\eta\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)$
+\end_inset
+
+, responding only to the local; when that gradient is tiny, it goes slowly.
+ Momentum optimization updates weights with a 
+\emph on
+momentum
+\emph default
+ vector 
+\begin_inset Formula $\boldsymbol{m}$
+\end_inset
+
+, and uses the gradient for acceleration.
+ It introduces the hyperparameter 
+\begin_inset Formula $\beta$
+\end_inset
+
+ (the 
+\emph on
+momentum
+\emph default
+) as a friction, to prevent the momentum vector from growing too large (usually
+ 
+\begin_inset Formula $\beta\sim0.9$
+\end_inset
+
+).
+ The whole technique allows the optimizer to speed up and also escape plateaus
+ much faster.
+ It is implemented in keras by 
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+optimizer=keras.optimizers.SGD(r=0.001,momentum=0.9)
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+Due to the momentum, the optimizer may overshoot a bit and oscillate by
+ the minimum.
+ The friction helps get rid of them and converge.
+\end_layout
+
+\begin_layout Subsection
+Nesterov accelerated gradient
+\end_layout
+
+\begin_layout Standard
+A small variant almost always faster: to compute the gradient not at current
+ position 
+\begin_inset Formula $\boldsymbol{\theta}$
+\end_inset
+
+ but slightly ahead 
+\begin_inset Formula $\boldsymbol{\theta}+\beta\boldsymbol{m}$
+\end_inset
+
+:
+\begin_inset Formula 
+\begin{align*}
+1\; & \boldsymbol{m}\leftarrow\beta\boldsymbol{m}-\eta\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}+\beta\boldsymbol{m}\right)\\
+2\; & \boldsymbol{\theta}\leftarrow\boldsymbol{\theta}+\boldsymbol{m}
+\end{align*}
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+This small tweak works because in general the momentum vector will be pointing
+ on the right direction, so it will be slightly more accurate to measure
+ the gradient a bit farther in that direction.
+ It can be enabled by passing 
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+nesterov=True
+\end_layout
+
+\end_inset
+
+.
+ to SGD constructor.
+\end_layout
+
+\begin_layout Subsection
+AdaGrad
+\end_layout
+
+\begin_layout Standard
+As with the elongated bowl cost function, the local gradient may not point
+ directly at the global minimum.
+ This algorithm corrects its direction earlier by scaling down the gradient
+ along the steepest dimensions.
+\begin_inset Formula 
+\begin{align*}
+1\; & \boldsymbol{s}\leftarrow\boldsymbol{s}+\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\otimes\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\\
+2\; & \boldsymbol{\theta}\leftarrow\boldsymbol{\theta}-\eta\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\oslash\sqrt{\boldsymbol{s}+\varepsilon}
+\end{align*}
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+The algorithm decays the learning rate, but faster for dimensions with steeper
+ slopes 
+\emph on
+(
+\series bold
+adaptive learning rate
+\series default
+)
+\series bold
+\emph default
+.
+ 
+\series default
+AdaGrad works well for simple quadratic problems, but often stops too early
+ when training nn (the 
+\begin_inset Formula $\eta$
+\end_inset
+
+ gets scaled down too much too soon).
+\end_layout
+
+\begin_layout Subsection
+RMSProp
+\end_layout
+
+\begin_layout Standard
+This algorithm fixes the problem ins AdaGrad by only accumulating the gradients
+ from recent iterations (by using and exponential running average).
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+1\; & \boldsymbol{s}\leftarrow\beta\boldsymbol{s}+\left(1-\beta\right)\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\otimes\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\\
+2\; & \boldsymbol{\theta}\leftarrow\boldsymbol{\theta}-\eta\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\oslash\sqrt{\boldsymbol{s}+\varepsilon}
+\end{align*}
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+This always performs much better than AdaGrad.
+ In keras,
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+keras.optimizers.RMSProp(lr, rho)
+\end_layout
+
+\end_inset
+
+ (
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+rho
+\end_layout
+
+\end_inset
+
+ is 
+\begin_inset Formula $\beta$
+\end_inset
+
+ here).
+\end_layout
+
+\begin_layout Subsection
+Adam and Nadam optimization
+\end_layout
+
+\begin_layout Standard
+Adam (
+\emph on
+adaptive moment estimation
+\emph default
+) combines the ideas of momentum and RMSProp.
+ It tracks and exponential running average of past gradients and their squares;
+ an estimation of their first and second moments.
+\begin_inset Formula 
+\begin{align*}
+1\; & \boldsymbol{m}\leftarrow\beta_{1}\boldsymbol{m}-\left(1-\beta_{1}\right)\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\\
+2\; & \boldsymbol{s}\leftarrow\beta_{2}\boldsymbol{s}+\left(1-\beta_{2}\right)\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\otimes\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\\
+3\; & \boldsymbol{\hat{m}}\leftarrow\dfrac{\boldsymbol{m}}{1-\beta_{1}^{t}}\\
+4\; & \boldsymbol{\hat{s}}\leftarrow\dfrac{s}{1-\beta_{2}^{t}}\\
+5\; & \boldsymbol{\theta}\leftarrow\boldsymbol{\theta}+\eta\boldsymbol{m}\oslash\sqrt{\boldsymbol{s}+\varepsilon}
+\end{align*}
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+3&4 help boost 
+\begin_inset Formula $\boldsymbol{m}$
+\end_inset
+
+ & 
+\begin_inset Formula $\boldsymbol{s}$
+\end_inset
+
+ at the beginning of training, since both are initialized to 
+\begin_inset Formula $0$
+\end_inset
+
+ and will be biased towards it.
+ In keras, 
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status open
+
+\begin_layout Plain Layout
+keras.optimizers.Adam(lr,beta_1,beta_2)
+\end_layout
+
+\end_inset
+
+.
+ As an adaptive learning rate, it requires less tuning of the hyperparameter
+ 
+\begin_inset Formula $\eta$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Paragraph
+Two variations of Adam:
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+AdaMax: 
+\series default
+Adam scales down the parameter updates by the 
+\begin_inset Formula $\ell^{2}$
+\end_inset
+
+ norm (scaled) between each component's current and past gradients.
+ AdaMax uses instead the 
+\begin_inset Formula $\ell^{\infty}$
+\end_inset
+
+ norm; 
+\emph on
+i.e.
+
+\emph default
+ replaces step 
+\series bold
+2
+\series default
+ with 
+\begin_inset Formula $\boldsymbol{s}\leftarrow\max\left(\beta_{2}\boldsymbol{s},\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\right)$
+\end_inset
+
+ (component-wise) and drops step 
+\series bold
+4
+\series default
+.
+ This can make the algorithm more stable but it really depends on the dataset.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Nadam: 
+\series default
+Adam + Nesterov; will often converge slightly faster.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Dozat2016"
+literal "false"
+
+\end_inset
+
+ finds that Nadam generally outperforms Adam, but is sometimes outperformed
+ by RMSProp.
+\end_layout
+
+\begin_layout Standard
+Adaptive optimization methods often converge fast to a good solution, but
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "wilson2017marginal"
+literal "false"
+
+\end_inset
+
+ showed they can lead to solutions that generalize poorly on some datasets.
+\end_layout
+
 \begin_layout Standard
 \begin_inset CommandInset bibtex
 LatexCommand bibtex

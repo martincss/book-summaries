@@ -1,0 +1,430 @@
+%% LyX 2.3.4.2 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[12pt,oneside,english]{extbook}
+\renewcommand{\rmdefault}{futs}
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2cm,bmargin=2cm,lmargin=2cm,rmargin=2cm}
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\PassOptionsToPackage{normalem}{ulem}
+\usepackage{ulem}
+\usepackage{babel}
+\begin{document}
+\title{Deep Learning Book: summary}
+
+\maketitle
+\global\long\def\grad{\boldsymbol{\nabla}}%
+
+\global\long\def\pdev#1#2{\dfrac{\partial#1}{\partial#2}}%
+
+
+\chapter*{Chapter 6: Deep FeedForward Networks}
+
+The goal is to approximate some function $f^{*}$. A ffn defines a
+mapping $\boldsymbol{y}=f\left(\boldsymbol{x};\boldsymbol{\theta}\right)$and
+learns the values of the parameters $\boldsymbol{\theta}$ for the
+best function approximation. The \textbf{network} model is associated
+with a directed acyclic graph describing how several functions $f^{(i)}$
+are composed together. These represente the \textbf{layers} of the
+network. The training examples specify what the output layer must
+do at each point $\boldsymbol{x}$, but not for the other layers.
+The learning algorithm must decide how to use these layers to best
+implement an approximation of $f^{*}$.
+
+FF networks can be considered as extensions from linear models to
+represent nonlinear functions of $\boldsymbol{x}$. This is done by
+applying the linear model to $\phi\left(\boldsymbol{x}\right)$, where
+$\phi$ is a nonlinear transformation. $\phi$ provides a new representation
+or set of features for $\boldsymbol{x}$. In DL, the strategy is to
+learn $\phi$, with a model $y=f\left(\boldsymbol{x};\boldsymbol{\theta},\boldsymbol{w}\right)=\phi\left(\boldsymbol{x};\boldsymbol{\theta}\right)^{\dagger}\boldsymbol{w}$;
+the parameters $\boldsymbol{\theta}$ are used to \uline{learn
+\mbox{$\phi$} from a broad class of functions}, and $\boldsymbol{w}$
+map $\phi\left(\boldsymbol{x}\right)$ to the output. This approach
+gives up on the convexity of the training problem but the benefits
+outweigh the harms.
+
+\section{Example: Learning XOR}
+
+We want a ff network to learn the XOR function, which maps $\boldsymbol{X}=\left\{ \left(\begin{array}{c}
+0\\
+0
+\end{array}\right),\left(\begin{array}{c}
+1\\
+0
+\end{array}\right),\left(\begin{array}{c}
+0\\
+1
+\end{array}\right),\left(\begin{array}{c}
+1\\
+1
+\end{array}\right)\right\} \longmapsto\left\{ 0,1,1,0\right\} $. Just for this example, we treat the problem as regression with a
+cost function 
+\[
+J\left(\boldsymbol{\theta}\right)=\dfrac{1}{4}\sum_{\boldsymbol{x}\in\boldsymbol{X}}\left(f^{*}\left(\boldsymbol{x}\right)-f\left(\boldsymbol{x};\boldsymbol{\theta}\right)\right)^{2}\text{ (MSE)}
+\]
+
+A linear model sharply fails, so a solution is to use a model that
+learns a different feature space in which a linear model can represent
+a solution.
+
+We introduce a ff network with one hidden layer with two units. Thus,
+the model is given by $y=f^{(2)}\left(\boldsymbol{h};\boldsymbol{w},b\right)$,
+with the hidden units $\boldsymbol{h}=f^{(1)}\left(\boldsymbol{x};\boldsymbol{W},\boldsymbol{c}\right)$.
+The output is a linear regression, applied to $\boldsymbol{h}$: $y=\boldsymbol{h}^{\dagger}\boldsymbol{w}+b$.
+If $f^{(1)}$ were a linear transformation, the network as a whole
+would remain linear, so we must use a nonlinear function to describe
+the features. Most nn use a \uline{learned affine transformation}
+followed by a fixed nonlinear function (\emph{activation}). Thus,
+$\boldsymbol{h}=g\left(\boldsymbol{W}^{\dagger}\boldsymbol{x}+\boldsymbol{c}\right)$;
+the activation is applied element-wise and the default choice is the
+\uline{ReLU}. \uline{Because the function is nearly linear,
+it preserves many of the properties that make linear models easy to
+optimize with gradient-based methods.}
+
+\section{Gradient-based learning}
+
+Unlike linear, logistic or SVM models, the nonlinearity of a nn causes
+loss functions to become non-convex. SGD applied to these functions
+has no convergence guarantee and is sensitive to parameter initial
+values. For ffnn, it is important to initialize all weights to small
+random numbers (biases to zero or small positive values).
+
+Linear models \& SVMs may be trained with SGD for large datasets;
+in this view, nn training is not much different. Computing the gradient
+is more complex but can be done exactly.
+
+\subsection{Cost functions}
+
+In most cases, the parametric model defines a distribution $p\left(\boldsymbol{y}\,|\,\boldsymbol{x};\boldsymbol{\theta}\right)$
+and we use maximum likelihood, thus making \uline{the cost function
+as the cross-entropy} (see section 5.5) between training data \& predictions.
+The total cost in training will often combine the primary cost and
+a regularization term.
+
+\subsubsection{Learning conditional distributions with Maximum Likelihood}
+
+In such conditions, the cost function is 
+\[
+J\left(\boldsymbol{\theta}\right)=-\mathbb{E}_{\boldsymbol{x},\boldsymbol{y}\sim p_{\text{data}}}\underset{\text{log likelihood}}{\underbrace{\log p_{\text{model}}\left(\boldsymbol{y}\,|\,\boldsymbol{x}\right)}}
+\]
+\\
+Its specific form depends on the model (by $p_{\text{model}}$). The
+expression may yield terms that do not depend on model parameters
+and can thus be discarded. For example, considering regression (see
+section 5.5.1), with $p_{\text{model}}\left(\boldsymbol{y}\,|\,\boldsymbol{x}\right)=\mathcal{N}\left(\boldsymbol{y};f\left(\boldsymbol{x};\boldsymbol{\theta}\right),\boldsymbol{I}\right)$,
+we recover the MSE cost 
+\[
+J\left(\boldsymbol{\theta}\right)=\mathbb{E}_{\boldsymbol{x},\boldsymbol{y}\sim p_{\text{data}}}\left\Vert \boldsymbol{y}-f\left(\boldsymbol{x};\boldsymbol{\theta}\right)\right\Vert ^{2}+\text{const}\left(\boldsymbol{I}\right)
+\]
+
+In nn design, the cost gradient should be large \& predictable. Functions
+that saturate (\emph{i.e.} activation) undermine this as they make
+the gradient small; the negative log-likelihood helps avoid this problem
+(saturation is usually given by an exponential, so the log undoes
+that)
+
+The cross-entropy cost in MLE usually does not have a minimum (\emph{i.e.}
+output probability cannot reach $0$ or $1$, but can come arbitrarily
+close to), This is solved by regularization techniques.
+
+\subsubsection{Learning conditional statistics}
+
+Instead of learning $p\left(\boldsymbol{y}\,|\,\boldsymbol{x};\boldsymbol{\theta}\right)$,
+we often want to learn just one conditional statistic of $\boldsymbol{y}$,
+given $\boldsymbol{x}$. 
+
+If we regard the nn being able to represent a large class of functions
+(instead of a parametric model with $\boldsymbol{\theta}$), and the
+cost as a functional over such space, we may optimize it with calculus
+of variations. By solving for 
+\[
+f^{*}=\underset{f}{\text{argmin }}\mathbb{E}_{\boldsymbol{x},\boldsymbol{y}\sim p_{\text{data}}}\left\Vert \boldsymbol{y}-f\left(\boldsymbol{x}\right)\right\Vert ^{2}
+\]
+\\
+yields 
+\[
+f^{*}=\mathbb{E}_{\boldsymbol{y}\sim p_{\text{data}}\left(\boldsymbol{y}\;|\;\boldsymbol{x}\right)}\left[\boldsymbol{y}\right]
+\]
+\\
+\emph{i.e.} this cost function predicts the mean of $\boldsymbol{y}$
+for each $\boldsymbol{x}$. Considering the MAE cost, we obtain a
+predictor for the median.
+
+\subsection{Output units}
+
+The choice of how to represent the output determines the form of the
+cross-entropy. We suppose the ffnn provides $\boldsymbol{h}=f\left(\boldsymbol{x};\boldsymbol{\theta}\right)$
+and the role of the output layer is to transform these features for
+the task.
+
+\subsubsection{Linear units for gaussian output distributions (\emph{i.e. }regression)}
+
+Affine transformation with nonlinearity: $\boldsymbol{\hat{y}}=\boldsymbol{W}^{\dagger}\boldsymbol{h}+\boldsymbol{b}$.
+These are used for the mean of a conditional gaussian $p\left(\boldsymbol{y}\,|\,\boldsymbol{x}\right)=\mathcal{N}\left(\boldsymbol{y};\boldsymbol{\hat{y}},\boldsymbol{I}\right)$.
+As we have seen, maximizing the log-likelihood is equivalent to minimizing
+the MSE. Also, their unbounded image goes well with GD.
+
+\subsubsection{Sigmoid for Bernoulli output distribution (\emph{i.e. }binary classification)}
+
+We need to predict $P\left(y=1\,|\,\boldsymbol{x}\right)$. Using
+ReLU wouldn't work, as the gradient may be null when the training
+example corresponds to the negative class; a sigmoid unit is instead
+used: $z=\boldsymbol{h}^{\dagger}\boldsymbol{w}+b$, $\hat{y}=\sigma\left(z\right)$.
+We can obtain this by assuming the log likelihood is linear in the
+output $y$ and $z$. Then, normalizing: $P\left(y\right)=\sigma\left[\left(2y-1\right)z\right]$.
+Thus, the MLE cost function is 
+\begin{align*}
+J\left(\boldsymbol{\theta}\right) & =\log P\left(y\;|\;\boldsymbol{x}\right)=-\log\sigma\left[\left(2y-1\right)z\right]\\
+ & =\zeta\left[\left(1-2y\right)z\right]\text{ (softplus)}
+\end{align*}
+\\
+This saturates only when $\left(1-2y\right)z\ll0$ {[}that is, when
+the model already knows the correct answer for that instance{]}. If
+$z$ has the wrong sign, then $\left(1-2y\right)z=\left|z\right|$,
+and the asymptote derivative is $\text{sign}\left(z\right)$, so the
+gradient does not shrink and the error can be corrected for quickly.
+
+With other cost functions than MLE cross-entropy, such as MSE, the
+loss can saturate with $\sigma\left(z\right)$, thus shrinking the
+gradient, regardless of the actual answer. MLE is thus preferred.
+
+\subsubsection{Softmax for Multinoulli output distribution (\emph{i.e. }multiclass
+classification)}
+
+To represent the probability distribution over a discrete variable
+with $n$ possible values, we may use softmax.
+
+We now need $\boldsymbol{\hat{y}}$, with $\hat{y}_{i}=P\left(y=i\,|\,\boldsymbol{x}\right)$
+and also $\sum_{i}\hat{y}_{i}=1$. We generalize the approach for
+the Bernoulli distribution: $\boldsymbol{z}=\boldsymbol{W}^{\dagger}\boldsymbol{h}+\boldsymbol{b}$,
+where $\boldsymbol{z}\propto\log P\left(y=i\,|\,\boldsymbol{x}\right)$.
+Then, normalizing:
+\[
+\text{softmax}\left(\boldsymbol{z}\right)_{i}=\dfrac{\exp\left(z_{i}\right)}{\sum_{j}\exp\left(z_{j}\right)}
+\]
+\\
+The log-likelihood is then 
+\[
+\log\text{softmax}\left(\boldsymbol{z}\right)_{i}=z_{i}-\log\sum_{j}\exp\left(z_{j}\right)
+\]
+\\
+the first term can never saturate, thus learning can proceed. The
+second term is $\sim\max_{j}z_{j}$; the intuition is that the cost
+always strongly penalizes the most active incorrect prediction. If
+the correct answer already has the largest $z_{i}$, the $\text{cost}\sim\max_{j}z_{j}-z_{i}\simeq0$;
+this examples will contribute little to the cost, which will be dominated
+by the incorrect ones. Unregularized MLE will drive the model to predict
+\[
+\text{softmax}\left(\boldsymbol{z}\left(\boldsymbol{x};\boldsymbol{\theta}\right)\right)_{i}=\left.\dfrac{\#\text{instances with }\boldsymbol{x}^{(j)}=\boldsymbol{x}\text{ and }\boldsymbol{y}^{(j)}=i}{\#\text{instances with }\boldsymbol{x}^{(j)}=\boldsymbol{x}}\right\} \rightarrow\begin{cases}
+\text{proportion of class \ensuremath{i} from }\\
+\text{instances with same \ensuremath{\boldsymbol{x}}}
+\end{cases}
+\]
+\\
+As MLE is consistent, this will happen as ling as the model family
+is capable of representing the target distribution. In practice, the
+model will only approximate these factors.
+
+Other cost functions than MLE don't work as well with softmax. The
+log from log-likelihood can prevent the exponential saturation, which
+diminishes the gradient. This saturation can occur even in incorrect
+predictions (when $z_{i}=\max_{j}z_{j}$ and $z_{i}\gg z_{j}\;j\neq i$).
+This means the model can make highly confident incorrect predictions
+with little loss.
+
+We can think of the softmax as creatin competition between its inputs
+(\emph{i.e.} increase in one output decreases others). The function
+is actually a softened version of $\text{argmax}\left(\boldsymbol{z}\right)$
+\emph{(softargmax).}
+
+\section{Hidden Units}
+
+The design choices of hidden units is an active area of research without
+many definitive guiding theoretical principles. ReLUs are an excellent
+default choice; the jump in their derivatives at $z=0$ is not a problem
+in practice, in part because training does not usually arrive at a
+local minimum of cost, but rather reduces its value significantly. 
+
+\subsection{ReLUs \& their generalizations}
+
+ReLUs \uline{are easy to optimize as they are similar to linear
+units:} their gradients are large and consistent. When initializing
+parameters, it can be good practice to set bias to a small positive
+number $b\sim0.1$, thus making units initially active for most inputs
+and allowing gradients to pass through.
+
+Some generalizations exist to address the problem that they cannot
+learn on examples for which their activation is zero. A \textbf{leaky
+ReLU} has an $\alpha_{i}$ slope when $z_{i}<0$, fixed to a small
+value like $0.01$. A \textbf{parametric ReLU} treats $\alpha_{i}$
+as a learnable parameter.
+
+\paragraph{Maxout units \protect \\
+\textmd{ReLUs also help with recurrent nn, as linear activation facilitates
+the propagation of information through several time steps.}}
+
+\subsection{Logistic sigmoid \& $\text{tanh}$}
+
+These were mostly used prior to ReLUs. Unlike the latter, these saturate
+across most of their domain; thus their use as hidden units in ffnn
+is now discouraged. They are more common in recurrent nn and autoencoders.
+
+\subsection{Other hidden units}
+
+A wide variety of differentiable functions perform perfectly well.
+New hidden unit types are now published only if they provide a clear
+improvement; otherwise they are so common as to be uninteresting.
+
+Softplus is generally discouraged, as it empirically shows worse performance
+than the rectifier.
+
+\section{Architecture design}
+
+In layer-based ffnn, the main choices are the depth of the network
+and width of each layer. Deeper networks often use fewer units per
+layer and total parameters, and often generalize to the test set,
+but are also harder to optimize. The ideal architecture for a task
+must be found via experimentation.
+
+\subsection{Universal approximation properties \& Depth}
+
+The \textbf{UA theorem }states that a ffnn with at least one hidden
+layer can approximate any Borel measurable function (on spaces of
+finite dimension) with any desired non-zero amount of error, given
+enough hidden units. However, the theorem states the nn will be able
+to \emph{represent} this function, that it can be \emph{learned} thru
+training is not guaranteed. Moreover, the number of hidden units needed,
+in worst case, is exponentially bounded.
+
+There exist families of functions which can be efficiently approximated
+by a network with depth $>d$, but require a much larger model if
+using a lesser depth.\\
+There are also statistical motivations for choosing a deep model.
+This choice encodes a general belief that the function to learn involves
+the composition of several simpler functions. This can be interpreted
+from a representation point of view that the learning problem consists
+of discovering a set of underlying features which in turn can be described
+in terms of simpler underlying features. Empirically, greater depth
+does seem to result in better generalization for many tasks (deeps
+archs. as a useful prior).
+
+\subsection{Other Architectural considerations}
+
+Another consideration is exactly hoe to connect a pair of layers to
+each other. Instead of the default fully connected, specialized networks
+(\emph{i.e.} convolutional) have fewer connections. These strategies
+reduce the number of parameters but are highly problem-dependent.
+
+\section{Back-Propagation and other differentiation algorithms}
+
+The term backpropagation refers only to the method fot computing the
+gradient (with a simple and inexpensive procedure), which is used
+in SGD to perform learning. The gradient we most often require is
+that of the cost function with respect to the parameters, $\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)$.
+BP can also be applied to other tasks that involve computing derivatives.
+
+\subsection{Computational graphs}
+
+We use each node to describe a variable. An \emph{operation} is a
+simple function of one or more variables. We specify a set of allowable
+operations, with more complicated functions describable by composition
+{[}without loss of generality, we will work here with operations with
+a single return variable{]}. If a variable $y$ results from the output
+of an operation applied to $x$. We draw a directed edge from $x$
+to $y$, labeled by the operation.
+
+\subsection{Chain rule of calculus}
+
+BP computes the chain rule, with a specific order of operations that
+is highly efficient. 
+\[
+\pdev z{x_{i}}=\pdev z{y_{j}}\pdev{y_{j}}{x_{i}}\text{ or }\grad_{\boldsymbol{x}}z=\left(\pdev{\boldsymbol{y}}{\boldsymbol{x}}\right)^{\dagger}\grad_{\boldsymbol{y}}z
+\]
+\\
+This will usually be applied to tensors. We denote the gradient of
+$z$ with respect to a tensor $\mathsf{X}$ as $\grad_{\mathsf{X}}z$;
+we can use a single index $i$ to represent the full tuple of indices,
+thus representing $\left(\grad_{\mathsf{X}}z\right)_{i}=\pdev z{\mathsf{X}_{i}}$.
+We can then write the chain rule as 
+\[
+\grad_{\mathsf{X}}z=\left(\grad_{\mathsf{X}}\mathsf{Y}_{j}\right)\pdev z{\mathsf{Y}_{j}}
+\]
+
+
+\subsection{Recursively applying the chain rule to obtain backpropagation}
+
+Actually computing the gradient with the chain rule includes many
+subexpressions that may be repeated several times within the overall
+expression of the gradient. For complicated graphs, there can be exponentially
+many repetitions, thus creating some necessity to store them.
+
+We now consider BP that specifies the actual gradient computation,
+but recursively applying the chain rule.\\
+We consider a computational graph to compute $u^{(n)}$ (\emph{e.g.
+}the loss function) with $n_{i}$ inputs $u^{(i)}$ with $i=1,...,n_{i}$;
+we wish to compute $\pdev{u^{(n)}}{u^{(i)}}$ (these inputs correspond
+to the model parameters).\\
+We assume the graph lets us compute their outputs $u^{(n_{I}+i)}$
+up to $u^{(n)}$; each associated with an operation $u^{(i)}=f^{(i)}\left(\boldsymbol{A}^{(i)}\right)$,
+where $\boldsymbol{A}^{(i)}=\text{Pa}\left(u^{(i)}\right)$ is the
+set of parent nodes to $u^{(i)}$. The forward computation defines
+a graph $\mathcal{G}$ of all computed nodes. To perform BP, we can
+extend $\mathcal{G}$ into $\mathcal{B}$, containing all nodes. Each
+node in $\mathcal{B}$ computes the derivative $\pdev{u^{(n)}}{u^{(i)}}$
+associated with the forward node $u^{(i)}$, using the chain rule
+\[
+\pdev{u^{(n)}}{u^{(j)}}=\sum_{i:j\in\text{Pa}\left(u^{(i)}\right)}\pdev{u^{(n)}}{u^{(i)}}\pdev{u^{(i)}}{u^{(j)}}
+\]
+\\
+$\mathcal{B}$ contains exactly one edge from $u^{(j)}$ to $u^{(i)}$
+of $\mathcal{G}$, associated with the computation of $\pdev{u^{(i)}}{u^{(j)}}$.
+A dot product is performed for each node, between the gradient already
+computed for $u^{(i)}$, children of $u^{(j)}$, and the vector of
+partial derivatives of $u^{(j)}$ with respect to its children $u^{(i)}$.
+The amount of computation scales linearly with the number of edges
+in $\mathcal{G}$. 
+
+By storing a gradient table, BP performs one gradient $\pdev{u^{(i)}}{u^{(j)}}$
+for each node, thus avoiding the exponential explosion of repeated
+expressions (with no regard to memory).
+
+\subsection{BP computation in fully-connected multilayer perceptron}
+
+We consider the specific graph of a multi-layer MLP.
+
+\paragraph{Forward propagation:}
+
+\[
+\boldsymbol{h}^{(0)}=\boldsymbol{x}
+\]
+\[
+\begin{cases}
+\text{for }k=1,...,l\text{ do}\\
+ & \boldsymbol{a}^{k}=\boldsymbol{b}^{k}+\boldsymbol{W}^{k}\boldsymbol{h}^{k-1}\\
+ & \boldsymbol{h}^{k}=f^{k}\left(\boldsymbol{a}^{k}\right)\\
+\text{end for}
+\end{cases}
+\]
+
+
+\paragraph{Backward propagation:}
+
+\[
+\boldsymbol{g}\leftarrow\grad_{\boldsymbol{y}}J=\grad_{\boldsymbol{y}}L\left(\boldsymbol{\hat{y}},\boldsymbol{y}\right)
+\]
+\[
+\begin{cases}
+\text{for }k=l,l-1,...,1\text{ do}\\
+\text{convert gradient on output into pre-activation} & \boldsymbol{g}\leftarrow\grad_{\boldsymbol{a}^{k}}J=\boldsymbol{g}\odot f'\left(\boldsymbol{a}^{k}\right)\\
+\text{compute gradient wrt weights and biases} & \grad_{\boldsymbol{b}^{k}}J=\boldsymbol{g}+\lambda\grad_{\boldsymbol{b}^{k}}\Omega\left(\boldsymbol{\theta}\right)\\
+ & \grad_{\boldsymbol{W}^{k}}J=\boldsymbol{g}\boldsymbol{h}^{(k-1)\dagger}+\lambda\grad_{\boldsymbol{W}^{k}}\Omega\left(\boldsymbol{\theta}\right)\\
+\text{propagate gradient wrt to the next layer's activationf} & \boldsymbol{g}=\grad_{\boldsymbol{h}^{k-1}}J=\boldsymbol{W}^{k\dagger}\boldsymbol{g}\\
+\text{end for}
+\end{cases}
+\]
+
+\end{document}

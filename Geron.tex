@@ -1,0 +1,755 @@
+%% LyX 2.3.4.2 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[12pt,oneside,english]{extbook}
+\renewcommand{\rmdefault}{futs}
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2cm,bmargin=2cm,lmargin=2cm,rmargin=2cm}
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+\usepackage{color}
+\usepackage{babel}
+\usepackage{amsmath}
+\PassOptionsToPackage{normalem}{ulem}
+\usepackage{ulem}
+\usepackage[unicode=true,pdfusetitle,
+ bookmarks=true,bookmarksnumbered=false,bookmarksopen=false,
+ breaklinks=false,pdfborder={0 0 1},backref=false,colorlinks=true]
+ {hyperref}
+
+\makeatletter
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Textclass specific LaTeX commands.
+\newcommand{\code}[1]{\texttt{#1}}
+
+\makeatother
+
+\usepackage{listings}
+\renewcommand{\lstlistingname}{Listing}
+
+\begin{document}
+\title{Hands-On Machine Learning: summary}
+
+\maketitle
+\global\long\def\grad{\boldsymbol{\nabla}}%
+
+\global\long\def\pdev#1#2{\dfrac{\partial#1}{\partial#2}}%
+
+\setcounter{chapter}{9}
+
+\chapter{Artificial Neural Networks}
+
+Artificial neural networks (ANNs): Machine learning model inspired
+by networks of biological neurons. They are at the very core of Deep
+Learning: versatile, powerful and scalable.
+
+\section{From Biological to Artificial Neurons}
+
+Reasons to believe this wave of interest in ANNs is more profound:
+\begin{itemize}
+\item Huge quantity of data available to train \& ANNs outperform other
+ML technologies in large \& complex problems
+\item Tremendous increase in computing power since the 90s + GPU \& cloud
+platforms
+\item Training algorithms have improved (by small tweaks with huge impact)
+\item Theoretical limitations have been mostly rare in practice
+\item ANNs seem to have entered a virtuous cycle of funding \& progress
+\end{itemize}
+
+\subsection{Biological neurons}
+
+Individual biological neurons seem to behave in a simple way, but
+are organized in a network of billions, each connected to thousands
+of others. Highly complex computations can emerge from their combines
+efforts. It appears that biological neurons are organized in consecutive
+layers, especially in the cerebral cortex.
+
+\subsection{Logical computations with neurons}
+
+The first artificial neurons had only binary inputs \& one binary
+output. Each neuron's output is active if more than a certain number
+of inputs are. A network like this can compute complex logical expressions.
+
+\subsection{The Perceptron}
+
+The \emph{perceptron} is a simple ANN architecture composed by a single
+layer of \uline{threshold logic unit} neurons. Their inputs and
+output are now real numbers; each input connection is associated with
+a weight. The TLU computes a weighted sum of its inputs $\left(z=\boldsymbol{x}^{\dagger}\boldsymbol{w}\right)$
+and then applies a \emph{step function}. Its output is thus $h_{\boldsymbol{w}}\left(\boldsymbol{x}\right)=\text{step}\left(z\right)$.
+
+A single TLU can be used for simple linear binary classification.
+The perceptron contains a layer of TLUs. each \emph{fully connected}
+to all inputs and also containing a \emph{bias} term. Ir can thus
+perform multioutput binary classification: $h_{\boldsymbol{w},i}=\phi\left(\boldsymbol{X}\boldsymbol{W}+\boldsymbol{b}\right)$,
+where $\phi$ is the activation function (step for TLUs), \textbf{$\boldsymbol{X}$
+}is the input matrix $\left(n_{\text{instances}}\times n_{\text{features}}\right)$,
+$\boldsymbol{W}$ is the weights matrix $\left(n_{\text{features}}\times n_{\text{neurons}}\right)$,
+and $\boldsymbol{b}$ is the bias vector $\left(n_{\text{neurons}}\right)$.
+
+The training is done in a way to reinforce connections that help reduce
+the error. The perceptron recieves one training instance at a time,
+and for each wrong output neuron, reinforces weights from inputs that
+would have contributed to the correct prediction: 
+\[
+w_{i,j}^{\text{next}}=w_{i,j}+\underset{\overbrace{\text{learning rate}}}{\eta}\underset{\overbrace{\text{0 or 1}}}{\left(y_{j}-\hat{y}_{j}\right)x_{i}}
+\]
+\\
+If the training instances are \emph{linearly separable}, the algorithm
+is proven to converge to a (non unique) solution. Contrary to logistic
+regression, these perceptrons do not output a class probability.
+
+Limitations of perceptrons (such as the XOR problem) can be eliminated
+by stacking multiple layers
+
+\subsection{The Multilayer Perceptron and Backpropagation}
+
+A MLP is comprised of an input layer, an output layer and several
+\emph{hidden} layers. Each layer except for the output) is fully connected
+(layers close to the input are called \emph{lower}). 
+
+The training algorithm is known as \textbf{backpropagation}: gradient
+descent with an efficient technique for \uline{computing gradients
+automatically} (\emph{autodiff}). In a forward and a backward pass,
+the algorithm is able to compute the gradient with respect to every
+model parameter.
+
+\paragraph{Algorithm breakdown}
+\begin{enumerate}
+\item Handles one mini-batch at a time, and goes through full training set
+multiple times (each pass is called an \emph{epoch}).
+\item For each instance in the mini-batch, the output is computed in a \emph{forward-pass}
+(intermediate results from all layers are preserved since they are
+needed for the backward pass).
+\item The output error is measured using the loss function
+\item Then it computes each output connection's contribution to the error.
+This is done analytically using the chain rule.
+\item It now calculates the error contributions from the weights on the
+layer below (also with the chain rule); this is repeated working backwards
+to the input layer
+\item Finally, a gradient step is performed to update all weights
+\end{enumerate}
+It is important that all weights be initialized randomly, or else
+the training will fail (a \emph{symmetry breaking} is required).
+
+In order for the algorithm to work, the step function must be smoothed
+to have a well-defined non-zero derivative, thus allowing GD to make
+some progress at every step. A first replacement is the sigmoid function
+$\sigma\left(z\right)=\dfrac{1}{1+\exp\left(-z\right)}$
+
+\subparagraph{Other choices:}
+\begin{itemize}
+\item $\tanh\left(z\right)=2\sigma\left(2z\right)-1$; similar to the logistic,
+but with output in $[-1,1]$. This tends to make each output mostly
+centered around $0$ at the beginning of training, which helps speed
+up the convergence.
+\item $\text{ReLU}\left(z\right)=\max\left(0,z\right)$; derivative jumps
+at $z=0$, which can make GD bounce; but works well and is very fast
+to compute. Its unbounded image helps reduce some issues during GD.
+\end{itemize}
+Nonlinearities introduced by activation functions are essential to
+the complexity of the model. A large enough DNN can theoretically
+approximate any continuous function.
+
+\subsection{Regression MLPs}
+
+One output neuron per output dimension (\emph{e.g.: }2 for locating
+the center of an object in an image; another 2 for a bounding box
+(height and width)). Usually no activation at the output, except for
+ReLU/$\text{softplus}\left(z\right)=\log\left[1+\exp\left(z\right)\right]$
+to restrict it to positive images; or $\sigma$/tanh to bound it.
+
+Training loss is typically MSE, or MAE/Huber (a combination of both)
+if there are many training outliers. The number of hidden layers is
+usually $\sim1-5$, and the neurons per layer are $\sim10-100$.
+
+\subsection{Classification MLPs}
+
+For each binary classification, a single output neuron with logistic
+activation is used, which can be interpreted as the estimated probability
+of the positive class.
+
+For single output multiclass classification, an output neuron per
+class is needed, and a softmax activation for the whole layer (which
+estimates each class' probability)
+
+The training loss function is generally multiclass cross-entropy.
+The rest of the architecture is broadly the same as with regression.
+
+\section{Implementing MLPs with Keras}
+
+Keras is a high-level Deep learning API with several backends. TensorFlow
+comes bundled with its own implementation, \code{tf.keras}, which
+has many advantages (\emph{e.g.} TF's Data API to load and preprocess
+data efficiently).
+
+\subsection{Building an image classifier using the \protect\code{Sequential}
+API}
+
+We use Fashion MNIST (70k grayscale $28\times28$ images, 10 classes).
+Since we will be using GD, we scale the input features.
+
+\paragraph{Creating the model}
+
+\code{model = keras.models.Sequential()} is the simplest model, for
+a single stack of layers connected sequentially\\
+\code{model.add(keras.layers.Flatten(input\_shape = {[}28,28{]}))}
+converts the image to a 1D array. As is the first layer, we must pass
+the \code{input\_shape} (for a single instance)\\
+\code{model.add(keras.layers.Dense(\#neurons, activation = 'relu'))}
+
+Instead of adding layers by one, it is possible to pass them as a
+list to the \code{Sequential} constructor.
+
+\subsubsection{Inspection}
+
+\code{model.summary()}displays the layers (by name), along with their
+parameters. \code{model.layers} returns them as a list, but they
+can also be called by name as \code{model.get\_layer('dense')}. Its
+parameters can be retrieved by \code{weights, biases = layer.get\_weights()}.
+For a custom initialization, when creating the layer we can set \code{kernel\_initializer}
+or \code{bias\_initializer}.
+
+\subsubsection{Compiling the model}
+
+The method must be called to specify the loss function and optimizer:
+\\
+\code{model.compile(loss = 'sparse\_categorical\_crossentropy', optimizer
+= 'sgd', metrics = {[}'accuracy'{]})}. The \code{metrics} arg corresponds the list of metrics to be computed
+during training and evalutation. The loss function here is due to
+exclusive classes and the class given by a single index (this is considered
+\emph{sparse}). If class were given by a one-hot vector instead, we
+use \code{categorical\_crossentropy}. To convert sparse to one-hot,
+\code{keras.utils.to\_categorical()}
+
+\subsubsection{Training and evaluating}
+
+\code{history = model.fit(X\_train, y\_train, epochs, validation\_data =
+(X\_val,y\_val))}\\
+With class imbalance, we can set the \code{class\_weigths} (and even
+\code{sample\_weight}) arguments in the \code{fit} method.
+
+The \code{fit} method returns a \code{History} object with the training
+parameters (\code{history.params}) and a dictrionary \code{history.history}
+containing the loss and metrics computed during training. This can
+be easily put in a dataframe toplot the learning curve (the training
+curve should be shifted to the left by half an epoch). The \code{fit}
+method resumes training from last state if called multiple times.
+
+To increase performance, the first hyperparameter to be tuned should
+be the learning rate; if that doesn't help, changing the optimizer.
+After that, the architecture and activation functions. Finally, we
+can evaluate the model with \code{model.evaluate(X\_test,y\_test)}
+
+\subsection{Building complex models using the \protect\code{Functional} API}
+
+To build models with more complex topologies, multiple inputs or outputs,
+keras offers the \code{Functional} API. Each layer must be defined
+as a separate object, specifying its input\\
+\code{input\_ = keras.layers.Input(shape={[}...{]})} an \code{Input}
+object must be defined (even more than one if necessary)\\
+\code{hidden = Dense(neurons, activation = 'relu')(input\_)} the
+input to this layer is passed by calling it as a function\\
+\code{concat = keras.layers.Concatenate()({[}input\_, hidden{]})}
+layer which concatenates inputs\\
+\code{model = keras.Model(inputs = {[}input\_{]}, outputs = {[}output{]})}
+we create the model, specifying input(s) and output(s). The model
+can then be compiled and trained.\\
+With multiple inputs, the \code{fit} method must be supplied with
+a tuple (or dictionary) of input matrices. \\
+Multiple outputs may be needed in many cases:
+\begin{itemize}
+\item The task may demand it; as in object location and identification (regression
+for a bounding box, classification to identify).
+\item Multiple independent tasks on the same data; the network can learn
+features in the data that are useful across tasks.
+\item It can be used as a regularization technique, for example, by adding
+an auxiliary output from middle layers, to ensure the underlying part
+learn something useful.
+\item Each output needs its own loss function. These will be added to obtain
+the total loss used in training, The losses will be passed as a list
+to the \code{fit} method, along with a list of \code{loss\_weights}
+to perform a weighted sum instead. As with inputs, a tuple of targets
+must be supplied.
+\end{itemize}
+
+\subsection{Using the \protect\code{Subclassing} API to build dynamic models}
+
+To create models with even greater flexibility (\emph{e.g. }loops,
+varying shapes, dynamical behaviours), we may use the subclassing
+API:
+
+\begin{lstlisting}[language=Python,basicstyle={\ttfamily},tabsize=4]
+class CustomModel(keras.Model): 		#inherit from base class
+
+	def __init__(self, ..., **kwargs):	  
+		super().__init__(**kwargs) 	 #handles standard args(e.g. name)
+		# all layers should be created in the constructor
+		self.hidden = ...
+
+	def call(self, inputs):
+	# all computations performed here (input need not be created, 
+	# just passed to the call method)
+		...
+	return outputs
+\end{lstlisting}
+The extra flexibility's cost is that the model architecture is hidden
+in \code{call}, so keras cannot easily inspect it, save it or clone
+it.\\
+Keras models can be used like regular layers to combine them.
+
+\subsection{Saving and restoring a model}
+
+With the \code{Sequential} or \code{Functional} API, a model can
+be saved to HDF5 using \code{model.save(fname)}. This saves the architecture,
+parameters for every layer and optimizer.\\
+It can be loaded using \code{keras.models.load\_model}\\
+This won't work with subclassing, but model parameters can be saved
+with \code{save\_weights} (also loaded with \code{load\_weights}).
+
+\subsection{Using Callbacks}
+
+The \code{fit} method accepts a list of objects in the \code{callbacks}
+argument, which will be called at the start and end of training, or
+each epoch or batch.
+
+\subsubsection{Model checkpoint}
+
+\code{checkpoint\_cb = keras.callbacks.ModelCheckpoint(fname, save\_best\_only=True)}
+the callback saves the model at regular intervals during training
+(by default at the end of each epoch). \\
+\code{save\_best\_only=True} will only make the checkpoint when the
+performance on the validation set is the best so far.
+
+\subsubsection{Early Stopping}
+
+\code{early\_stopping\_cb = keras.callbacks.EarlyStopping(patience)}
+will interrupt training when it measures no progress on validation
+during a number of epochs (given by \code{patience}). The best model
+can be restored enabling \code{restore\_best\_weights=True}.
+
+\subsubsection{Custom Callbacks}
+
+We can create callbacks by inheriting from the base class
+
+\begin{lstlisting}[language=Python,basicstyle={\ttfamily},tabsize=4]
+class CustomCallback(keras.callbacks.Callback):
+	def on_epoch_end(self, epoch, logs):
+		print(logs['val_loss'])
+\end{lstlisting}
+options include \code{on\_train\_end}, \code{on\_batch\_end}, etc.
+Also ones only with evaluate, predict.
+
+\subsection{Using TensorBoard for visualization}
+
+TensorBoard is an interactive visualization tool to view learning
+curves during training, compare them between runs, visualize the computation
+graph, training statistics \& multidimensional data projected to 3D
+(and more).\\
+To use it, the model must generate binary \emph{event files}, The
+TB server monitors a log directory; it is useful to have a different
+subdir for each run. The TB callback must be used to generate the
+files:\\
+\code{tensorboard\_cb = keras.callback.TensorBoard(run\_logdir)}\\
+The server can be called with \\
+\code{\%load\_ext tensorboard}\\
+\code{\%tensorboard --logdir=./my\_logs --port=6006}\\
+TF also has a low-level API to manually write logs (\code{tf.summary})
+
+\section{Fine-tuning neural network hyperparameters}
+
+The main drawback of the flexibility of ANNs is the number of hyperparameters
+to tweak. There are some options to find the best combination.\\
+One option is to try many combinations using grid or random search
+and measuring on the validation set (or using k-fold cross validation).
+To work with the scikit-learn API, we use a wrapper to treat models
+as sklearn estimators:\\
+\code{keras\_reg = keras.wrappers.scikit\_learn.KerasRegressor(build\_model)}
+where \code{build\_model} is function that takes a set og hyperparameters
+and returns a compiled model.\\
+Random search works well for fairly simple problems, but when training
+is slow, it will only explore a tiny portion of hyperparameter space.
+
+Other approaches ``zoom in'' when a region in the space turns out
+to be good; there are several libraries for this purpose
+
+\subsection{Number of hidden layers}
+
+For simple problems, a single hidden layer may be enough; but for
+complex problems, deep networks have a much higher \emph{parameter
+efficiency} than shallow ones: they can model complex functions using
+exponentially fewer neurons.
+
+Deep networks can model the hierarchical structure of data: lower
+layers encode low-level features, and higher layers combine them to
+model high-level, more abstract structures (\emph{e.g.} from line
+segments to faces). This can also help the model generalize to other
+datasets. For example, we may reuse the lower layers from a model
+already trained to recognize faces to train a new model to recognize
+hairstyles
+
+\chapter{Training Deep Neural Networks}
+
+Training a DNN (10+ layers), each with 100s of neurons and 100000s
+of connections can incur many problems:
+\begin{itemize}
+\item \emph{Vanishing/exploding gradients }problem, which make lower layers
+very hard to train.
+\item Not enough training data for such a large network, or too costly to
+label.
+\item Training may be extremely slow
+\item A model with millions of parameters would severely risk overfitting,
+if there are not enough training instances
+\end{itemize}
+
+\section{The Vanishing/exploding gradients problems}
+
+BP works by propagating the error gradient from the output to the
+input layer. However, gradients often get smaller as the algorithm
+progressed to the lower layers: thus the GD update is not significant
+and training cannot converge to a good solution. Likewise, the gradients
+can grow bigger and the algorithm diverges.\\
+This behaviour was addressed in \cite{glorot10}. Using a sigmoid
+activation and $\mathcal{N}\left(0,1\right)$ weight initialization
+causes weight variance to grow with layer depth. causing the activations
+to saturate. This implies the gradient is close to 0 dilutes further
+with BP.
+
+\subsection{Glorot and He initialization}
+
+In \cite{glorot10}, they argue that the variance of the outputs of
+each layer needs to be equal to the variance of its inputs, and the
+same condition is needed for the variance of the gradients before
+and after backflowing through the layer, for the signal to flow properly
+in both directions. This cannot be guaranteed when \#inputs (\emph{fan-in})
+is not equal to the \#outputs (\emph{fan-out}), but a good compromise
+can be made
+
+\subsubsection{Glorot/Xavier initialization (when using logistic activation)}
+
+Weights to be sampled from a normal distribution $\mathcal{N}\left(0,\sigma^{2}\right)$,
+with $\sigma^{2}=\dfrac{1}{\text{fan}_{\text{avg}}}$; or from a uniform
+distribution $U[-r,r]$, with $r=\sqrt{\dfrac{3}{\text{fan}_{\text{avg}}}}$
+
+\subsubsection{He initialization (when using ReLU \& variants)}
+
+Same as Glorot, but using $\sigma^{2}=\dfrac{2}{\text{fan}_{\text{in}}}$,
+or uniform using $r=\sqrt{3\sigma^{2}}$
+
+\subsubsection{LeCun initialization (when using SELU):}
+
+Only normal distribution with $\sigma^{2}=\dfrac{1}{\text{fan}_{\text{in}}}$
+
+By default. keras uses uniform Glorot. When creating a layer, the
+initializer can be set with \code{kernel\_initializer='he\_normal'},
+for instance. A custom initialization can be done with (e.g. He average)\\
+\begin{lstlisting}[language=Python,basicstyle={\ttfamily},tabsize=4]
+he_avg_init=keras.initializers.VarianceScaling(scale=2.,
+								mode='fan_avg',
+								distribution='uniform')
+\end{lstlisting}
+and this object must be passed to the \code{kernel\_initializer}.
+
+\subsection{Nonsaturating activation functions}
+
+Due to the lack of saturation, ReLUs work better than sigmoid in DNNs.
+However, during training some neurons may ``die'', outputting nothing
+than 0, anulling their gradients too. This may be solved using a \emph{leaky}
+ReLU, with a small slope $\alpha$ for $z<0$. This ensures the unitrs
+never ``die''.
+
+\cite{bingxu15} concluded leaky ReLUs always outperform strict ones,
+even working better with $\alpha\sim0.2$ instead of $\sim0.01$.
+The paper also evaluated the \emph{randomized leaky} ReLU (setting
+a random $\alpha$ during training and fixing to an average during
+test), which performed fairly well and seemed to act as a regularizer.\\
+The paper also evaluated the PReLU, where $\alpha$ is an hyperparameter.
+It is reported to outperform ReLUs on large image datasets, but runs
+the risk of overfitting on smaller ones.
+
+\cite{clevert2015} proposed the \emph{exponential linear unit }(ELU)
+that outperformed ReLU in both training time and test score. ELU:
+\begin{itemize}
+\item Takes on negative values with $z<0$, which allows the unit to have
+an average output closer to 0, and helps with vanishing gradients.
+The asympote negative value is an hyperparameter.
+\item It has nonzero gradient for $z<0$, which helps avoid dead neurons.
+\item With the hyperparameter $\alpha$ it is smooth everywhere, helps speed
+up GD
+\end{itemize}
+The main drawback is the slower computation than ReLU; but its faster
+convergence rate compensates for that during training (not so during
+evaluation).
+
+\cite{klambauer2017} introduced the scaled ELU (SELU). The authors
+showed that a nn built only from a stack of dense layers, using only
+SELU will \emph{self-normalize}: the output of each layer will tend
+to preserve a mean of 0 and a variance of 1 during training, which
+solves both gradient problems. SELU often outperforms other activation
+functions, but there are a few conditions for self-normalization:
+\begin{enumerate}
+\item Input features must be standarized (mean 0, std 1)
+\item Every hidden layer initialized with LeCun normal
+\item Network architecture must be sequential. In RNN or other architectures,
+self-normalization cannot be guaranteed.
+\end{enumerate}
+The paper only guarantees self-normalization if all layers are dense.
+but it has been noted that SELU can improve performance in CNNs.
+
+In general, SELU > ELU > leaky ReLU > tanh > sigmoid. When caring
+about runtime, leaky ReLU may be preferred, even with default $\alpha=0.3$
+(keras). ELU may perform better than SELU if self-normalization is
+not possible. RReLU may be used when overfitting or PReLU with a huge
+training set.
+
+In keras, leaky ReLU and PReLU must be added as layers:\\
+\code{keras.layers.LeakyReLU(alpha)} or \code{PReLU()}. SELU can
+be set as \\
+\code{Dense(units, activation='selu', kernel\_initializer='lecun\_normal')}
+
+\subsection{Batch normalization}
+
+The former strategies can reduce the danger of vanishing/exploding
+gradients at the beginning of training, there is no guarantee they
+won't come back during training.
+
+\cite{ioffe2015batch} proposed \textbf{batch normalization }to address
+these problems. The technique adds a new operation as a layer, to
+be used before or after the activation on each hidden layer. Each
+input feature is zero-centered and normalized, then re-scaled and
+centered using two learnable parameters (per input per layer). The
+model can thus learn the optimal scale and mean of each of the layer's
+inputs.
+
+The algorithm estimates the input's mean and std on each mini-batch:
+\begin{align*}
+1\; & \boldsymbol{\mu}_{B}=\dfrac{1}{m_{B}}\sum_{i=1}^{m_{b}}\boldsymbol{x}^{(i)}\\
+2\; & \boldsymbol{\sigma}_{B}^{2}=\dfrac{1}{m_{B}}\sum_{i=1}^{m_{B}}\left(\boldsymbol{x}^{(i)}-\boldsymbol{\mu}_{B}\right)^{2}\\
+3\; & \boldsymbol{\hat{x}}^{(i)}=\dfrac{\boldsymbol{x}^{(i)}-\boldsymbol{\mu}_{B}}{\sqrt{\boldsymbol{\sigma}_{B}^{2}+\varepsilon}}\\
+4\; & \boldsymbol{z}^{(i)}=\boldsymbol{\gamma}\otimes\boldsymbol{x}^{(i)}+\boldsymbol{\beta}
+\end{align*}
+\\
+$m_{B}$ is the mini-batch size, $\varepsilon$ is a smoothing term
+$\sim10^{-5}$, $\boldsymbol{z}^{(i)}$ is the BN output and $\boldsymbol{\gamma}\;\boldsymbol{\beta}$
+are the output scale and shift parameters.
+
+$\boldsymbol{\mu}_{B}$ and $\boldsymbol{\sigma}_{B}^{2}$ are estimated
+for each batch furing training. At test time, an estimation for the
+whole training set (accumulated during training) is used. Thus, four
+parameter vectors are learned: $\boldsymbol{\gamma},\;\boldsymbol{\beta},\;\boldsymbol{\mu},\;\boldsymbol{\sigma}^{2}$
+(the latter two used only after training).
+
+BN also acts as a regularizer, reducing the need for other techniques.
+However, it does add some complexity to the model and has longer runtime.
+Though after training it is possible to merge the BN with the previous
+layer (by combining the parameters into new weights and biases).
+
+Training will be slower, as each epoch takes much mote time; but this
+is counterbalanced by faster convergence, sot it will take fewer epochs
+to reach the same performance.
+
+\subsubsection{Implementation in keras}
+
+BN can be added as a layer, before or after each hidden layer's activation
+function \\
+(as \code{keras.layers.BatchNormaliztion()}).
+
+There is some debate whether the layer should be added before or after
+the activation. To add them before, the activation must be unspecified
+on the hidden layers and added as a separate layer. This allows us
+to remove bias from those layers with \code{use\_bias=False}, as
+BN already contains a shift.
+
+The layer contains a few hyperparameters; namely the \textbf{momentum
+(p)}, used when updating the exponential moving averages (for $\mu$
+and $\sigma$)
+\[
+\boldsymbol{\begin{gathered}\hat{v}\end{gathered}
+}\leftarrow\boldsymbol{\hat{v}}\times p+\boldsymbol{v}\times(1-p)
+\]
+\\
+where $\boldsymbol{\hat{v}}$ is the running average and $\boldsymbol{v}$
+is the new value. $p$ is usually very close to 1 (0.9 or 0.99) (closer
+for larger datasets).
+
+Another hyperparameter is \code{axis}, which indicates which axis
+to normalize. Default is -1 (last axis), which works when input is
+2D \code{{[}batch\_size,features{]}}. Care should be taken when feeding
+unflattened 2D images, for instance.
+
+The different beahaviour when training and predicting is given by
+the \code{training} arg in the \code{call} method. It is set to
+1 when calling \code{fit}.
+
+BN is near ubiquitous now, but \cite{zhang2019fixup} managed to train
+a very deep (10k layers) net without BN by using a \emph{fixed-update}
+weight initialization scheme.
+
+\subsection{Gradient clipping}
+
+Another technique to prevent exploding gradient is to limit the gradient
+value below a threshold during BP. This is most often used on RNNs,
+where BN is tricky, With keras,\\
+\code{keras.optimizers.SGD(clipvalue=1.0)} each gradient component
+will be limited to $\pm1.0$ (which may change the direction). To
+scale by the $\ell^{2}$norm and preserve the direction, \code{clipnorm}
+may be used instead.
+
+\section{Reusing pretrained layers}
+
+Instead of training a large DNN from scratch, it is usually a better
+idea to find an existing one which accomplishes a similar task and
+reuse the lower layers (\textbf{\emph{transfer learning}}). This will
+speed up training and require significantly less training data.
+
+Transfer learning will work best when the inputs have similar low-level
+features. The upper hidden layers of the original model are less likely
+to be useful, as the high-level features may differ significantly
+between tasks. The more similar the tasks are, the more layers will
+be reusable.
+
+A first attemts would be to freeze (make their weights non trainable)
+all reused layers and train \& evaluate the model. Then, unfreezing
+layers from the top, retraining and checking if performance improves.
+The more data available, the more layers we can unfreeze, It is useful
+to reduce learning rate when unfreezing, as to avoid wrecking the
+fine-tuned weights.
+
+\subsection{Transfer learning with keras}
+
+Cloning a model to reuse:\\
+\code{model\_A\_clone = keras.models.clone\_model(model\_A)}\\
+\code{model\_A\_clone.set\_weights(model\_A.get\_weights())} (weights
+must be set manually). Reusing all but the last layer:\\
+\code{model\_B = Sequential(model\_A.layers{[}:-1{]})}. Freezing
+layers:\\
+\code{for layer in model\_B.layers: layer.trainable=False}\\
+Model must be always compiled after freezing/unfreezing.
+
+Transfer learning does not work very well with small dense networks,
+presumably because they learn few, very specific patterns. TL works
+best with deep CNN, which tend to learn more general feature detectors.
+
+\subsection{Unsupervised pretraining}
+
+When tackling a complex task with few training data and no pretrained
+similar model, we may be able to perform \textbf{unsupervised pretraining:}
+With a large amount of unlabeled training data, an autoencoder or
+GAN can be trained, and its lower layers reused for a supervised model
+(using an output layer on top), fine-tuned with available data.
+
+\subsection{Pretraining on an auxiliary task}
+
+Also with little training data, another option is to first train a
+nn on an auxiliary task for which training data can be easily obtained
+or generated, and then reuse that model's lower layers for the actual
+task. This is done in NLP by training a model to predict missing words
+ins a large corpus (\emph{i.e.} word2vec).
+
+\textbf{\emph{Self-supervised learning}} consists on automatically
+generating labels from the data itself, thus counted as unsupervised.
+
+\section{Faster optimizers}
+
+A further way to speed up training is by a faster optimizer than SGD.
+
+\subsection{Momentum optimization}
+
+Regular GD updates by $\boldsymbol{\theta}\leftarrow\boldsymbol{\theta}-\eta\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)$,
+responding only to the local; when that gradient is tiny, it goes
+slowly. Momentum optimization updates weights with a \emph{momentum}
+vector $\boldsymbol{m}$, and uses the gradient for acceleration.
+It introduces the hyperparameter $\beta$ (the \emph{momentum}) as
+a friction, to prevent the momentum vector from growing too large
+(usually $\beta\sim0.9$). The whole technique allows the optimizer
+to speed up and also escape plateaus much faster. It is implemented
+in keras by \\
+\code{optimizer=keras.optimizers.SGD(r=0.001,momentum=0.9)}\\
+Due to the momentum, the optimizer may overshoot a bit and oscillate
+by the minimum. The friction helps get rid of them and converge.
+
+\subsection{Nesterov accelerated gradient}
+
+A small variant almost always faster: to compute the gradient not
+at current position $\boldsymbol{\theta}$ but slightly ahead $\boldsymbol{\theta}+\beta\boldsymbol{m}$:
+\begin{align*}
+1\; & \boldsymbol{m}\leftarrow\beta\boldsymbol{m}-\eta\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}+\beta\boldsymbol{m}\right)\\
+2\; & \boldsymbol{\theta}\leftarrow\boldsymbol{\theta}+\boldsymbol{m}
+\end{align*}
+\\
+This small tweak works because in general the momentum vector will
+be pointing on the right direction, so it will be slightly more accurate
+to measure the gradient a bit farther in that direction. It can be
+enabled by passing \code{nesterov=True}. to SGD constructor.
+
+\subsection{AdaGrad}
+
+As with the elongated bowl cost function, the local gradient may not
+point directly at the global minimum. This algorithm corrects its
+direction earlier by scaling down the gradient along the steepest
+dimensions.
+\begin{align*}
+1\; & \boldsymbol{s}\leftarrow\boldsymbol{s}+\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\otimes\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\\
+2\; & \boldsymbol{\theta}\leftarrow\boldsymbol{\theta}-\eta\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\oslash\sqrt{\boldsymbol{s}+\varepsilon}
+\end{align*}
+\\
+The algorithm decays the learning rate, but faster for dimensions
+with steeper slopes \emph{(}\textbf{\emph{adaptive learning rate}}\emph{)}\textbf{.
+}AdaGrad works well for simple quadratic problems, but often stops
+too early when training nn (the $\eta$ gets scaled down too much
+too soon).
+
+\subsection{RMSProp}
+
+This algorithm fixes the problem ins AdaGrad by only accumulating
+the gradients from recent iterations (by using and exponential running
+average).
+
+\begin{align*}
+1\; & \boldsymbol{s}\leftarrow\beta\boldsymbol{s}+\left(1-\beta\right)\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\otimes\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\\
+2\; & \boldsymbol{\theta}\leftarrow\boldsymbol{\theta}-\eta\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\oslash\sqrt{\boldsymbol{s}+\varepsilon}
+\end{align*}
+\\
+This always performs much better than AdaGrad. In keras,\\
+\code{keras.optimizers.RMSProp(lr, rho)} (\code{rho} is $\beta$
+here).
+
+\subsection{Adam and Nadam optimization}
+
+Adam (\emph{adaptive moment estimation}) combines the ideas of momentum
+and RMSProp. It tracks and exponential running average of past gradients
+and their squares; an estimation of their first and second moments.
+\begin{align*}
+1\; & \boldsymbol{m}\leftarrow\beta_{1}\boldsymbol{m}-\left(1-\beta_{1}\right)\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\\
+2\; & \boldsymbol{s}\leftarrow\beta_{2}\boldsymbol{s}+\left(1-\beta_{2}\right)\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\otimes\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\\
+3\; & \boldsymbol{\hat{m}}\leftarrow\dfrac{\boldsymbol{m}}{1-\beta_{1}^{t}}\\
+4\; & \boldsymbol{\hat{s}}\leftarrow\dfrac{s}{1-\beta_{2}^{t}}\\
+5\; & \boldsymbol{\theta}\leftarrow\boldsymbol{\theta}+\eta\boldsymbol{m}\oslash\sqrt{\boldsymbol{s}+\varepsilon}
+\end{align*}
+\\
+3\&4 help boost $\boldsymbol{m}$ \& $\boldsymbol{s}$ at the beginning
+of training, since both are initialized to $0$ and will be biased
+towards it. In keras, \\
+\code{keras.optimizers.Adam(lr,beta\_1,beta\_2)}. As an adaptive
+learning rate, it requires less tuning of the hyperparameter $\eta$.
+
+\paragraph{Two variations of Adam:}
+\begin{itemize}
+\item \textbf{AdaMax: }Adam scales down the parameter updates by the $\ell^{2}$
+norm (scaled) between each component's current and past gradients.
+AdaMax uses instead the $\ell^{\infty}$ norm; \emph{i.e.} replaces
+step \textbf{2} with $\boldsymbol{s}\leftarrow\max\left(\beta_{2}\boldsymbol{s},\grad_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}\right)\right)$
+(component-wise) and drops step \textbf{4}. This can make the algorithm
+more stable but it really depends on the dataset.
+\item \textbf{Nadam: }Adam + Nesterov; will often converge slightly faster.
+\cite{Dozat2016} finds that Nadam generally outperforms Adam, but
+is sometimes outperformed by RMSProp.
+\end{itemize}
+Adaptive optimization methods often converge fast to a good solution,
+but \cite{wilson2017marginal} showed they can lead to solutions that
+generalize poorly on some datasets.
+
+\bibliographystyle{apalike}
+\bibliography{bibliography}
+
+\end{document}
